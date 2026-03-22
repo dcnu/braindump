@@ -2,7 +2,7 @@ import Foundation
 
 enum Constants {
 	static let defaultPanelWidth: CGFloat = 400
-	static let defaultPanelHeight: CGFloat = 500
+	static let defaultPanelHeight: CGFloat = 1000
 	static let defaultDayStartHour: Int = 2
 	static let fileExtension = "md"
 	static let braindumpDirectory = "braindump"

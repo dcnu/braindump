@@ -58,12 +58,19 @@ final class HotkeyManager {
 		return false
 	}
 
-	static func checkAccessibility() -> Bool {
-		let trusted = AXIsProcessTrusted()
-		if !trusted {
+	/// Check accessibility permission. Only prompts the user once (on first launch).
+	static func checkAccessibilityOnce() -> Bool {
+		if AXIsProcessTrusted() {
+			return true
+		}
+
+		let hasPromptedKey = "hasPromptedAccessibility"
+		if !UserDefaults.standard.bool(forKey: hasPromptedKey) {
+			UserDefaults.standard.set(true, forKey: hasPromptedKey)
 			let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
 			AXIsProcessTrustedWithOptions(options)
 		}
-		return trusted
+
+		return false
 	}
 }

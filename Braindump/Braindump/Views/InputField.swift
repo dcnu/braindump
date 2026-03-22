@@ -34,8 +34,9 @@ struct InputField: View {
 		let content = appState.draftContent.trimmingCharacters(in: .whitespacesAndNewlines)
 		guard !content.isEmpty else { return }
 
-		if let id = appState.createEntry() {
-			appState.updateEntryContent(id: id, content: content)
+		if let _ = appState.createEntry() {
+			// Set editingContent so submitEntry() syncs the right value
+			appState.editingContent = content
 			appState.submitEntry()
 			appState.draftContent = ""
 		}

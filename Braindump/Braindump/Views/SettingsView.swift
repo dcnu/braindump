@@ -22,8 +22,7 @@ struct SettingsView: View {
 					Label("Hotkey", systemImage: "keyboard")
 				}
 		}
-		.frame(width: 420, height: 340)
-		.padding()
+		.frame(minWidth: 420, minHeight: 340)
 	}
 
 	// MARK: - General Tab

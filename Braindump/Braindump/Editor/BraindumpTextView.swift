@@ -36,9 +36,9 @@ final class BraindumpTextView: NSTextView {
 		usesFindBar = false
 
 		font = markdownHighlighter.theme.baseFont
-		textColor = markdownHighlighter.theme.baseColor
+		textColor = .labelColor
 		insertionPointColor = .labelColor
-		backgroundColor = .clear
+		drawsBackground = false
 
 		textStorage?.delegate = markdownHighlighter
 

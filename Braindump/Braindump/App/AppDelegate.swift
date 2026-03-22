@@ -4,7 +4,6 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
 	private var statusItem: NSStatusItem!
 	private var panel: FloatingPanel!
-	private var clickOutsideMonitor: Any?
 	private var hotkeyManager: HotkeyManager?
 	private var settingsWindow: NSWindow?
 	let appState = AppState()
@@ -61,25 +60,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 	}
 
 	@objc private func openSettings() {
-		if let window = settingsWindow {
-			window.makeKeyAndOrderFront(nil)
+		if let window = settingsWindow, window.isVisible {
 			NSApp.activate(ignoringOtherApps: true)
+			window.orderFrontRegardless()
 			return
 		}
 
 		let settingsView = SettingsView(appState: appState)
 		let window = NSWindow(
-			contentRect: NSRect(x: 0, y: 0, width: 420, height: 340),
-			styleMask: [.titled, .closable],
+			contentRect: NSRect(x: 0, y: 0, width: 460, height: 400),
+			styleMask: [.titled, .closable, .resizable],
 			backing: .buffered,
 			defer: false
 		)
 		window.title = "Braindump Settings"
+		window.contentMinSize = NSSize(width: 420, height: 340)
 		window.contentView = NSHostingView(rootView: settingsView)
 		window.center()
 		window.isReleasedWhenClosed = false
-		window.makeKeyAndOrderFront(nil)
+
 		NSApp.activate(ignoringOtherApps: true)
+		window.orderFrontRegardless()
 
 		settingsWindow = window
 	}
@@ -96,7 +97,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 				width: width > 0 ? width : Constants.defaultPanelWidth,
 				height: height > 0 ? height : Constants.defaultPanelHeight
 			),
-			styleMask: [.titled, .resizable, .fullSizeContentView, .nonactivatingPanel],
+			styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
 			backing: .buffered,
 			defer: false
 		)
@@ -104,7 +105,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		panel.titleVisibility = .hidden
 		panel.titlebarAppearsTransparent = true
 		panel.isMovableByWindowBackground = true
-		panel.level = .floating
 		panel.isReleasedWhenClosed = false
 		panel.animationBehavior = .utilityWindow
 		panel.minSize = NSSize(width: 300, height: 200)
@@ -117,56 +117,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 	@objc private func togglePanel() {
 		if panel.isVisible {
-			dismissPanel()
+			panel.orderOut(nil)
+			appState.isPanelVisible = false
 		} else {
 			showPanel()
 		}
 	}
 
 	private func showPanel() {
-		guard let button = statusItem.button,
-			  let buttonWindow = button.window else { return }
-
-		let buttonFrame = buttonWindow.convertToScreen(button.convert(button.bounds, to: nil))
+		guard let screen = NSScreen.main else { return }
+		let screenFrame = screen.visibleFrame
 		let panelSize = panel.frame.size
 
-		var x = buttonFrame.midX - panelSize.width / 2
-		let y = buttonFrame.minY - panelSize.height - 4
-
-		// Keep panel on screen
-		if let screen = NSScreen.main {
-			let screenFrame = screen.visibleFrame
-			x = max(screenFrame.minX, min(x, screenFrame.maxX - panelSize.width))
-		}
+		let x = screenFrame.midX - panelSize.width / 2
+		let y = screenFrame.midY - panelSize.height / 2
 
 		panel.setFrameOrigin(NSPoint(x: x, y: y))
+		NSApp.activate(ignoringOtherApps: true)
 		panel.makeKeyAndOrderFront(nil)
 		appState.isPanelVisible = true
 		appState.navigateToToday()
-
-		clickOutsideMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-			guard let self, self.panel.isVisible else { return }
-			let mouseLocation = NSEvent.mouseLocation
-			if !self.panel.frame.contains(mouseLocation) {
-				self.dismissPanel()
-			}
-		}
-	}
-
-	private func dismissPanel() {
-		panel.orderOut(nil)
-		appState.isPanelVisible = false
-
-		if let monitor = clickOutsideMonitor {
-			NSEvent.removeMonitor(monitor)
-			clickOutsideMonitor = nil
-		}
 	}
 
 	// MARK: - Global Hotkey
 
 	private func setupHotkey() {
-		let settings = appState.settings
 		hotkeyManager = HotkeyManager(
 			keyCode: UInt16(KeyCombo.defaultHotkey.key),
 			modifierFlags: .control
@@ -176,8 +151,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 			}
 		}
 
-		_ = HotkeyManager.checkAccessibility()
-		hotkeyManager?.start()
+		if HotkeyManager.checkAccessibilityOnce() {
+			hotkeyManager?.start()
+		}
 	}
 
 	// MARK: - App Lifecycle
@@ -208,8 +184,9 @@ extension AppDelegate: NSWindowDelegate {
 
 final class FloatingPanel: NSPanel {
 	override var canBecomeKey: Bool { true }
+	override var canBecomeMain: Bool { true }
 
-	override func cancelOperation(_ sender: Any?) {
+	override func close() {
 		orderOut(nil)
 	}
 }

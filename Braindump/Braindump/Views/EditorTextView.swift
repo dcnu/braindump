@@ -33,6 +33,11 @@ struct EditorTextView: NSViewRepresentable {
 		scrollView.documentView = textView
 		context.coordinator.textView = textView
 
+		// Force initial highlighting
+		if let storage = textView.textStorage {
+			textView.markdownHighlighter.applyHighlighting(to: storage)
+		}
+
 		return scrollView
 	}
 
@@ -42,11 +47,20 @@ struct EditorTextView: NSViewRepresentable {
 		if textView.string != text {
 			let selectedRange = textView.selectedRange()
 			textView.string = text
-			textView.markdownHighlighter.applyHighlighting(to: textView.textStorage!)
-			textView.setSelectedRange(selectedRange)
+			if let storage = textView.textStorage {
+				textView.markdownHighlighter.applyHighlighting(to: storage)
+			}
+			let safeRange = NSRange(
+				location: min(selectedRange.location, textView.string.count),
+				length: 0
+			)
+			textView.setSelectedRange(safeRange)
 		}
 
 		textView.isEditable = isEditable
+
+		// Ensure text color stays correct when appearance changes
+		textView.textColor = .labelColor
 	}
 
 	func makeCoordinator() -> Coordinator {
@@ -57,4 +71,3 @@ struct EditorTextView: NSViewRepresentable {
 		var textView: BraindumpTextView?
 	}
 }
-
