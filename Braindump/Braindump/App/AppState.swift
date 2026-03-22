@@ -6,18 +6,15 @@ final class AppState {
 	var currentDate: String
 	var dailyFile: DailyFile?
 	var index: [IndexEntry] = []
+
+	// Draft state — user is composing a new entry
 	var draftContent: String = ""
-	var editingEntryID: UUID? = nil {
-		didSet {
-			if let id = editingEntryID,
-			   let entry = dailyFile?.entries.first(where: { $0.id == id }) {
-				editingContent = entry.content
-			} else {
-				editingContent = ""
-			}
-		}
-	}
+	var isDrafting: Bool = false
+
+	// Edit state — user is editing an existing entry
+	var editingEntryID: UUID? = nil
 	var editingContent: String = ""
+
 	var isPanelVisible: Bool = false
 
 	let settings: AppSettings
@@ -77,16 +74,26 @@ final class AppState {
 		loadCurrentDay()
 	}
 
-	// MARK: - Entry Management
+	// MARK: - Draft (new entry)
 
-	func createEntry() -> UUID? {
-		guard dailyFile?.frontMatter.status != .processed else { return nil }
+	func startDraft() {
+		guard !isCurrentDayProcessed else { return }
+		isDrafting = true
+		draftContent = ""
+	}
 
-		let timestamp = DateFormatting.entryTimestamp()
-		let entry = Entry(timestamp: timestamp, content: "")
+	func submitDraft() {
+		let content = draftContent.trimmingCharacters(in: .whitespacesAndNewlines)
+		isDrafting = false
+		draftContent = ""
+
+		guard !content.isEmpty else { return }
+
+		let now = Date()
+		let timestamp = DateFormatting.entryTimestamp(from: now)
+		let entry = Entry(timestamp: timestamp, content: content)
 
 		if dailyFile == nil {
-			let now = Date()
 			dailyFile = DailyFile(
 				frontMatter: FrontMatter(
 					created: currentDate,
@@ -96,34 +103,58 @@ final class AppState {
 			)
 		} else {
 			dailyFile?.entries.append(entry)
+			dailyFile?.frontMatter.edited = DateFormatting.editedTimestamp(from: now)
 		}
 
-		editingEntryID = entry.id
-		return entry.id
+		saveCurrentDay()
 	}
 
-	func submitEntry() {
-		guard let entryID = editingEntryID,
-			  var file = dailyFile else { return }
+	func cancelDraft() {
+		isDrafting = false
+		draftContent = ""
+	}
 
-		if let idx = file.entries.firstIndex(where: { $0.id == entryID }) {
-			// Sync editing content back to the entry
+	// MARK: - Edit (existing entry)
+
+	func startEditing(id: UUID) {
+		guard !isCurrentDayProcessed,
+			  let entry = dailyFile?.entries.first(where: { $0.id == id }) else { return }
+		editingEntryID = id
+		editingContent = entry.content
+	}
+
+	func submitEdit() {
+		guard let entryID = editingEntryID,
+			  var file = dailyFile,
+			  let idx = file.entries.firstIndex(where: { $0.id == entryID }) else {
+			editingEntryID = nil
+			editingContent = ""
+			return
+		}
+
+		let content = editingContent.trimmingCharacters(in: .whitespacesAndNewlines)
+
+		if content.isEmpty {
+			file.entries.remove(at: idx)
+		} else {
 			file.entries[idx] = Entry(
 				id: entryID,
 				timestamp: file.entries[idx].timestamp,
-				content: editingContent
+				content: content
 			)
-
-			if editingContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-				file.entries.remove(at: idx)
-			}
 		}
 
 		file.frontMatter.edited = DateFormatting.editedTimestamp()
 		dailyFile = file
 		editingEntryID = nil
+		editingContent = ""
 
 		saveCurrentDay()
+	}
+
+	func cancelEdit() {
+		editingEntryID = nil
+		editingContent = ""
 	}
 
 	func deleteEntry(id: UUID) {
@@ -141,15 +172,8 @@ final class AppState {
 
 		if editingEntryID == id {
 			editingEntryID = nil
+			editingContent = ""
 		}
-	}
-
-	func updateEntryContent(id: UUID, content: String) {
-		guard var file = dailyFile,
-			  let idx = file.entries.firstIndex(where: { $0.id == id }) else { return }
-
-		file.entries[idx] = Entry(id: id, timestamp: file.entries[idx].timestamp, content: content)
-		dailyFile = file
 	}
 
 	// MARK: - Display Helpers

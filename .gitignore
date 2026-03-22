@@ -32,3 +32,4 @@ Packages/
 
 # Archive
 archive/
+*.profraw

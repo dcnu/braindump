@@ -78,6 +78,19 @@ final class AppSettings {
 		set { UserDefaults.standard.set(newValue, forKey: "launchAtLogin") }
 	}
 
+	var fontName: String {
+		get { UserDefaults.standard.string(forKey: "fontName") ?? "SF Mono" }
+		set { UserDefaults.standard.set(newValue, forKey: "fontName") }
+	}
+
+	var fontSize: Double {
+		get {
+			let value = UserDefaults.standard.double(forKey: "fontSize")
+			return value > 0 ? value : 13
+		}
+		set { UserDefaults.standard.set(newValue, forKey: "fontSize") }
+	}
+
 	var braindumpURL: URL {
 		let base = URL(fileURLWithPath: (vaultPath as NSString).expandingTildeInPath)
 		return base.appendingPathComponent(Constants.braindumpDirectory)

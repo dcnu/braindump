@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 	func applicationDidFinishLaunching(_ notification: Notification) {
 		applyAppearance(appState.settings.appearanceMode)
+		logAppearance()
 		setupStatusItem()
 		setupPanel()
 		setupHotkey()
@@ -25,13 +26,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 	// MARK: - Status Item
 
 	private func setupStatusItem() {
-		statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+		statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
 		if let button = statusItem.button {
-			button.image = NSImage(
-				systemSymbolName: "brain.head.profile",
-				accessibilityDescription: "Braindump"
-			)
+			if let image = NSImage(systemSymbolName: "brain.head.profile", accessibilityDescription: "Braindump") {
+				image.isTemplate = true
+				button.image = image
+			} else {
+				button.title = "BD"
+			}
 			button.action = #selector(statusItemClicked(_:))
 			button.target = self
 			button.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -159,6 +162,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 	@objc private func appDidBecomeActive() {
 		appState.handleFileChange()
+	}
+
+	private func logAppearance() {
+		let effective = NSApp.effectiveAppearance
+		let isDark = effective.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+		let setting = appState.settings.appearanceMode.rawValue
+		print("[Braindump] System appearance: \(isDark ? "Dark" : "Light"), Setting: \(setting), Effective: \(effective.name.rawValue)")
 	}
 
 	private func applyAppearance(_ mode: AppearanceMode) {

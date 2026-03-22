@@ -18,12 +18,10 @@ struct EntryRow: View {
 				.frame(width: 70, alignment: .leading)
 
 			if isEditing {
-				EditorTextView(
-					text: $editContent,
-					onSubmit: onSubmit,
-					isEditable: true
-				)
-				.frame(minHeight: 20, maxHeight: 200)
+				TextEditor(text: $editContent)
+					.font(.system(.body, design: .monospaced))
+					.scrollContentBackground(.hidden)
+					.frame(minHeight: 24, maxHeight: 200)
 			} else {
 				Text(entry.content.isEmpty ? " " : entry.content)
 					.font(.system(.body, design: .monospaced))

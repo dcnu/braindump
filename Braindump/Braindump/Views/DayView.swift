@@ -2,11 +2,33 @@ import SwiftUI
 
 struct DayView: View {
 	@Bindable var appState: AppState
+	@FocusState private var draftFocused: Bool
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 12) {
 			dayHeader
 
+			// Draft entry (inline, appears when CMD+N is pressed)
+			if appState.isDrafting {
+				HStack(alignment: .top, spacing: 12) {
+					Text("--:--:--")
+						.font(.system(.caption, design: .monospaced))
+						.foregroundStyle(.tertiary)
+						.frame(width: 70, alignment: .leading)
+
+					TextEditor(text: $appState.draftContent)
+						.font(.system(.body, design: .monospaced))
+						.scrollContentBackground(.hidden)
+						.focused($draftFocused)
+						.frame(minHeight: 24, maxHeight: 200)
+				}
+				.padding(.vertical, 4)
+				.onAppear {
+					draftFocused = true
+				}
+			}
+
+			// Existing entries
 			if appState.dailyFile != nil {
 				ForEach(appState.displayEntries()) { entry in
 					EntryRow(
@@ -16,20 +38,20 @@ struct DayView: View {
 						isEditing: appState.editingEntryID == entry.id,
 						editContent: $appState.editingContent,
 						onTap: {
-							if !appState.isCurrentDayProcessed {
-								appState.editingEntryID = entry.id
-							}
+							appState.startEditing(id: entry.id)
 						},
 						onSubmit: {
-							appState.submitEntry()
+							appState.submitEdit()
 						},
 						onDelete: {
 							appState.deleteEntry(id: entry.id)
 						}
 					)
 				}
-			} else {
-				Text("No entries")
+			}
+
+			if !appState.isDrafting && appState.dailyFile == nil {
+				Text("Press CMD+N to add an entry")
 					.font(.system(.body, design: .monospaced))
 					.foregroundStyle(.tertiary)
 					.frame(maxWidth: .infinity, alignment: .center)
