@@ -4,10 +4,19 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
 	private var statusItem: NSStatusItem!
 	private var panel: FloatingPanel!
+	private var globalMonitor: Any?
+	let appState = AppState()
 
 	func applicationDidFinishLaunching(_ notification: Notification) {
 		setupStatusItem()
 		setupPanel()
+
+		NotificationCenter.default.addObserver(
+			self,
+			selector: #selector(appDidBecomeActive),
+			name: NSApplication.didBecomeActiveNotification,
+			object: nil
+		)
 	}
 
 	private func setupStatusItem() {
@@ -24,11 +33,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 	}
 
 	private func setupPanel() {
-		let width: CGFloat = UserDefaults.standard.object(forKey: "panelWidth") as? CGFloat ?? 400
-		let height: CGFloat = UserDefaults.standard.object(forKey: "panelHeight") as? CGFloat ?? 500
+		let width = CGFloat(UserDefaults.standard.double(forKey: "panelWidth"))
+		let height = CGFloat(UserDefaults.standard.double(forKey: "panelHeight"))
 
 		panel = FloatingPanel(
-			contentRect: NSRect(x: 0, y: 0, width: width, height: height),
+			contentRect: NSRect(
+				x: 0, y: 0,
+				width: width > 0 ? width : Constants.defaultPanelWidth,
+				height: height > 0 ? height : Constants.defaultPanelHeight
+			),
 			styleMask: [.titled, .resizable, .fullSizeContentView, .nonactivatingPanel],
 			backing: .buffered,
 			defer: false
@@ -41,7 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		panel.isReleasedWhenClosed = false
 		panel.animationBehavior = .utilityWindow
 
-		let contentView = ContentView()
+		let contentView = ContentView(appState: appState)
 		panel.contentView = NSHostingView(rootView: contentView)
 
 		panel.delegate = self
@@ -67,10 +80,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 		panel.setFrameOrigin(NSPoint(x: x, y: y))
 		panel.makeKeyAndOrderFront(nil)
+		appState.isPanelVisible = true
 
-		NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+		globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
 			guard let self, self.panel.isVisible else { return }
-			if !self.panel.frame.contains(event.locationInWindow) {
+			let mouseLocation = NSEvent.mouseLocation
+			if !self.panel.frame.contains(mouseLocation) {
 				self.dismissPanel()
 			}
 		}
@@ -78,14 +93,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 	private func dismissPanel() {
 		panel.orderOut(nil)
+		appState.isPanelVisible = false
+
+		if let monitor = globalMonitor {
+			NSEvent.removeMonitor(monitor)
+			globalMonitor = nil
+		}
+	}
+
+	@objc private func appDidBecomeActive() {
+		appState.handleFileChange()
 	}
 }
 
 extension AppDelegate: NSWindowDelegate {
 	func windowDidResize(_ notification: Notification) {
 		guard let window = notification.object as? NSWindow, window == panel else { return }
-		UserDefaults.standard.set(window.frame.width, forKey: "panelWidth")
-		UserDefaults.standard.set(window.frame.height, forKey: "panelHeight")
+		UserDefaults.standard.set(Double(window.frame.width), forKey: "panelWidth")
+		UserDefaults.standard.set(Double(window.frame.height), forKey: "panelHeight")
 	}
 }
 
