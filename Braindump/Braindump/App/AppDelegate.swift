@@ -3,7 +3,7 @@ import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
 	private var statusItem: NSStatusItem!
-	private var panel: FloatingPanel!
+	private var panel: NSWindow!
 	private var hotkeyManager: HotkeyManager?
 	private var settingsWindow: NSWindow?
 	let appState = AppState()
@@ -91,7 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		let width = CGFloat(UserDefaults.standard.double(forKey: "panelWidth"))
 		let height = CGFloat(UserDefaults.standard.double(forKey: "panelHeight"))
 
-		panel = FloatingPanel(
+		panel = NSWindow(
 			contentRect: NSRect(
 				x: 0, y: 0,
 				width: width > 0 ? width : Constants.defaultPanelWidth,
@@ -106,7 +106,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		panel.titlebarAppearsTransparent = true
 		panel.isMovableByWindowBackground = true
 		panel.isReleasedWhenClosed = false
-		panel.animationBehavior = .utilityWindow
 		panel.minSize = NSSize(width: 300, height: 200)
 
 		let contentView = ContentView(appState: appState)
@@ -180,13 +179,13 @@ extension AppDelegate: NSWindowDelegate {
 		UserDefaults.standard.set(Double(window.frame.width), forKey: "panelWidth")
 		UserDefaults.standard.set(Double(window.frame.height), forKey: "panelHeight")
 	}
-}
 
-final class FloatingPanel: NSPanel {
-	override var canBecomeKey: Bool { true }
-	override var canBecomeMain: Bool { true }
-
-	override func close() {
-		orderOut(nil)
+	func windowShouldClose(_ sender: NSWindow) -> Bool {
+		if sender == panel {
+			sender.orderOut(nil)
+			appState.isPanelVisible = false
+			return false
+		}
+		return true
 	}
 }
