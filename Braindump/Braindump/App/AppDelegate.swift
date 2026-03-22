@@ -4,12 +4,14 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
 	private var statusItem: NSStatusItem!
 	private var panel: FloatingPanel!
-	private var globalMonitor: Any?
+	private var clickOutsideMonitor: Any?
+	private var hotkeyManager: HotkeyManager?
 	let appState = AppState()
 
 	func applicationDidFinishLaunching(_ notification: Notification) {
 		setupStatusItem()
 		setupPanel()
+		setupHotkey()
 
 		NotificationCenter.default.addObserver(
 			self,
@@ -19,6 +21,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		)
 	}
 
+	// MARK: - Status Item
+
 	private func setupStatusItem() {
 		statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
@@ -27,10 +31,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 				systemSymbolName: "brain.head.profile",
 				accessibilityDescription: "Braindump"
 			)
-			button.action = #selector(togglePanel)
+			button.action = #selector(statusItemClicked(_:))
 			button.target = self
+			button.sendAction(on: [.leftMouseUp, .rightMouseUp])
 		}
 	}
+
+	@objc private func statusItemClicked(_ sender: NSStatusBarButton) {
+		guard let event = NSApp.currentEvent else { return }
+
+		if event.type == .rightMouseUp {
+			showContextMenu()
+		} else {
+			togglePanel()
+		}
+	}
+
+	private func showContextMenu() {
+		let menu = NSMenu()
+		menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ","))
+		menu.addItem(NSMenuItem.separator())
+		menu.addItem(NSMenuItem(title: "Quit Braindump", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+
+		statusItem.menu = menu
+		statusItem.button?.performClick(nil)
+		statusItem.menu = nil
+	}
+
+	@objc private func openSettings() {
+		// Settings window will be implemented in Phase 8
+	}
+
+	// MARK: - Panel
 
 	private func setupPanel() {
 		let width = CGFloat(UserDefaults.standard.double(forKey: "panelWidth"))
@@ -53,6 +85,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		panel.level = .floating
 		panel.isReleasedWhenClosed = false
 		panel.animationBehavior = .utilityWindow
+		panel.minSize = NSSize(width: 300, height: 200)
 
 		let contentView = ContentView(appState: appState)
 		panel.contentView = NSHostingView(rootView: contentView)
@@ -75,14 +108,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		let buttonFrame = buttonWindow.convertToScreen(button.convert(button.bounds, to: nil))
 		let panelSize = panel.frame.size
 
-		let x = buttonFrame.midX - panelSize.width / 2
+		var x = buttonFrame.midX - panelSize.width / 2
 		let y = buttonFrame.minY - panelSize.height - 4
+
+		// Keep panel on screen
+		if let screen = NSScreen.main {
+			let screenFrame = screen.visibleFrame
+			x = max(screenFrame.minX, min(x, screenFrame.maxX - panelSize.width))
+		}
 
 		panel.setFrameOrigin(NSPoint(x: x, y: y))
 		panel.makeKeyAndOrderFront(nil)
 		appState.isPanelVisible = true
+		appState.navigateToToday()
 
-		globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+		clickOutsideMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
 			guard let self, self.panel.isVisible else { return }
 			let mouseLocation = NSEvent.mouseLocation
 			if !self.panel.frame.contains(mouseLocation) {
@@ -95,11 +135,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		panel.orderOut(nil)
 		appState.isPanelVisible = false
 
-		if let monitor = globalMonitor {
+		if let monitor = clickOutsideMonitor {
 			NSEvent.removeMonitor(monitor)
-			globalMonitor = nil
+			clickOutsideMonitor = nil
 		}
 	}
+
+	// MARK: - Global Hotkey
+
+	private func setupHotkey() {
+		let settings = appState.settings
+		hotkeyManager = HotkeyManager(
+			keyCode: UInt16(KeyCombo.defaultHotkey.key),
+			modifierFlags: .control
+		) { [weak self] in
+			DispatchQueue.main.async {
+				self?.togglePanel()
+			}
+		}
+
+		_ = HotkeyManager.checkAccessibility()
+		hotkeyManager?.start()
+	}
+
+	// MARK: - App Lifecycle
 
 	@objc private func appDidBecomeActive() {
 		appState.handleFileChange()
