@@ -1,0 +1,50 @@
+name: Braindump
+options:
+  bundleIdPrefix: com.dcnu
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "26.3"
+  createIntermediateGroups: true
+  indentWidth: 1
+  tabWidth: 1
+  usesTabs: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+targets:
+  Braindump:
+    type: application
+    platform: macOS
+    sources:
+      - path: Braindump
+    info:
+      path: Braindump/Info.plist
+      properties:
+        LSUIElement: true
+        CFBundleDisplayName: Braindump
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        NSHumanReadableCopyright: "Copyright © github.com/dcnu"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dcnu.braindump
+        PRODUCT_NAME: Braindump
+        INFOPLIST_FILE: Braindump/Info.plist
+    entitlements:
+      path: Braindump/Braindump.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+  BraindumpTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: BraindumpTests
+    dependencies:
+      - target: Braindump
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dcnu.braindump.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Braindump.app/Contents/MacOS/Braindump"
+        BUNDLE_LOADER: "$(TEST_HOST)"

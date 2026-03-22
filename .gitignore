@@ -1,0 +1,34 @@
+# Xcode
+*.xcodeproj/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+*.moved-aside
+*.xcuserstate
+*.xcscmblueprint
+
+# Build
+build/
+.build/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Environment
+.env
+.env.*
+
+# Output
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Dependencies
+Packages/
+.swiftpm/
+
+# Archive
+archive/
