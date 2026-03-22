@@ -7,7 +7,17 @@ final class AppState {
 	var dailyFile: DailyFile?
 	var index: [IndexEntry] = []
 	var draftContent: String = ""
-	var editingEntryID: UUID? = nil
+	var editingEntryID: UUID? = nil {
+		didSet {
+			if let id = editingEntryID,
+			   let entry = dailyFile?.entries.first(where: { $0.id == id }) {
+				editingContent = entry.content
+			} else {
+				editingContent = ""
+			}
+		}
+	}
+	var editingContent: String = ""
 	var isPanelVisible: Bool = false
 
 	let settings: AppSettings
@@ -97,7 +107,14 @@ final class AppState {
 			  var file = dailyFile else { return }
 
 		if let idx = file.entries.firstIndex(where: { $0.id == entryID }) {
-			if file.entries[idx].content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+			// Sync editing content back to the entry
+			file.entries[idx] = Entry(
+				id: entryID,
+				timestamp: file.entries[idx].timestamp,
+				content: editingContent
+			)
+
+			if editingContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
 				file.entries.remove(at: idx)
 			}
 		}

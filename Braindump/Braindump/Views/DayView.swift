@@ -14,13 +14,11 @@ struct DayView: View {
 						displayTimestamp: appState.displayTimestamp(entry.timestamp),
 						isProcessed: appState.isCurrentDayProcessed,
 						isEditing: appState.editingEntryID == entry.id,
+						editContent: $appState.editingContent,
 						onTap: {
 							if !appState.isCurrentDayProcessed {
 								appState.editingEntryID = entry.id
 							}
-						},
-						onContentChange: { newContent in
-							appState.updateEntryContent(id: entry.id, content: newContent)
 						},
 						onSubmit: {
 							appState.submitEntry()

@@ -22,11 +22,17 @@ struct ContentView: View {
 		.keyboardShortcut(.rightArrow, modifiers: .command, onPress: {
 			appState.navigateDay(offset: 1)
 		})
+		.keyboardShortcut("n", modifiers: .command, onPress: {
+			_ = appState.createEntry()
+		})
+		.keyboardShortcut(.delete, modifiers: .command, onPress: {
+			if let id = appState.editingEntryID {
+				appState.deleteEntry(id: id)
+			}
+		})
 	}
 }
 
-// Use hidden buttons for keyboard shortcuts since .onKeyPress with modifiers
-// requires macOS 15+. This approach works on macOS 14+.
 extension View {
 	func keyboardShortcut(_ key: KeyEquivalent, modifiers: EventModifiers, onPress action: @escaping () -> Void) -> some View {
 		self.background(

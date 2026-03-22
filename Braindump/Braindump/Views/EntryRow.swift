@@ -5,8 +5,8 @@ struct EntryRow: View {
 	let displayTimestamp: String
 	let isProcessed: Bool
 	let isEditing: Bool
+	@Binding var editContent: String
 	let onTap: () -> Void
-	let onContentChange: (String) -> Void
 	let onSubmit: () -> Void
 	let onDelete: () -> Void
 
@@ -18,15 +18,12 @@ struct EntryRow: View {
 				.frame(width: 70, alignment: .leading)
 
 			if isEditing {
-				TextField("", text: Binding(
-					get: { entry.content },
-					set: { onContentChange($0) }
-				), axis: .vertical)
-				.textFieldStyle(.plain)
-				.font(.system(.body, design: .monospaced))
-				.onSubmit {
-					onSubmit()
-				}
+				EditorTextView(
+					text: $editContent,
+					onSubmit: onSubmit,
+					isEditable: true
+				)
+				.frame(minHeight: 20, maxHeight: 200)
 			} else {
 				Text(entry.content.isEmpty ? " " : entry.content)
 					.font(.system(.body, design: .monospaced))
