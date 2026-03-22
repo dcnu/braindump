@@ -6,9 +6,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 	private var panel: FloatingPanel!
 	private var clickOutsideMonitor: Any?
 	private var hotkeyManager: HotkeyManager?
+	private var settingsWindow: NSWindow?
 	let appState = AppState()
 
 	func applicationDidFinishLaunching(_ notification: Notification) {
+		applyAppearance(appState.settings.appearanceMode)
 		setupStatusItem()
 		setupPanel()
 		setupHotkey()
@@ -59,7 +61,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 	}
 
 	@objc private func openSettings() {
-		// Settings window will be implemented in Phase 8
+		if let window = settingsWindow {
+			window.makeKeyAndOrderFront(nil)
+			NSApp.activate(ignoringOtherApps: true)
+			return
+		}
+
+		let settingsView = SettingsView(appState: appState)
+		let window = NSWindow(
+			contentRect: NSRect(x: 0, y: 0, width: 420, height: 340),
+			styleMask: [.titled, .closable],
+			backing: .buffered,
+			defer: false
+		)
+		window.title = "Braindump Settings"
+		window.contentView = NSHostingView(rootView: settingsView)
+		window.center()
+		window.isReleasedWhenClosed = false
+		window.makeKeyAndOrderFront(nil)
+		NSApp.activate(ignoringOtherApps: true)
+
+		settingsWindow = window
 	}
 
 	// MARK: - Panel
@@ -162,6 +184,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 	@objc private func appDidBecomeActive() {
 		appState.handleFileChange()
+	}
+
+	private func applyAppearance(_ mode: AppearanceMode) {
+		switch mode {
+		case .system:
+			NSApp.appearance = nil
+		case .light:
+			NSApp.appearance = NSAppearance(named: .aqua)
+		case .dark:
+			NSApp.appearance = NSAppearance(named: .darkAqua)
+		}
 	}
 }
 
