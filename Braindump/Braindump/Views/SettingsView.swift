@@ -17,17 +17,15 @@ struct SettingsView: View {
 	]
 
 	var body: some View {
-		ScrollView {
-			Form {
-				storageSection
-				appearanceSection
-				fontSection
-				entriesSection
-				hotkeySection
-				startupSection
-			}
-			.formStyle(.grouped)
+		Form {
+			storageSection
+			appearanceSection
+			fontSection
+			entriesSection
+			hotkeySection
+			startupSection
 		}
+		.formStyle(.grouped)
 	}
 
 	// MARK: - Storage

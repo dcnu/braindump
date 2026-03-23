@@ -21,6 +21,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 			name: NSApplication.didBecomeActiveNotification,
 			object: nil
 		)
+
+		NotificationCenter.default.addObserver(
+			self,
+			selector: #selector(openSettings),
+			name: .openSettings,
+			object: nil
+		)
 	}
 
 	// MARK: - Status Item
@@ -71,7 +78,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 		let settingsView = SettingsView(appState: appState)
 		let window = NSWindow(
-			contentRect: NSRect(x: 0, y: 0, width: 460, height: 400),
+			contentRect: NSRect(x: 0, y: 0, width: 460, height: 700),
 			styleMask: [.titled, .closable, .resizable],
 			backing: .buffered,
 			defer: false

@@ -38,7 +38,14 @@ struct ContentView: View {
 				appState.deleteEntry(id: id)
 			}
 		})
+		.keyboardShortcut(",", modifiers: .command, onPress: {
+			NotificationCenter.default.post(name: .openSettings, object: nil)
+		})
 	}
+}
+
+extension Notification.Name {
+	static let openSettings = Notification.Name("com.dcnu.braindump.openSettings")
 }
 
 extension View {
