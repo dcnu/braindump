@@ -3,6 +3,7 @@ import SwiftUI
 struct DateJumpOverlay: View {
 	@Binding var query: String
 	let dayStartHour: Int
+	let hasNotes: (String) -> Bool
 	let onJump: (String) -> Void
 	let onDismiss: () -> Void
 
@@ -12,42 +13,86 @@ struct DateJumpOverlay: View {
 		DateParser.parse(query, dayStartHour: dayStartHour)
 	}
 
+	private var logicalToday: String {
+		DateFormatting.logicalDate(dayStartHour: dayStartHour)
+	}
+
+	private var isFutureDate: Bool {
+		guard let date = parsedDate else { return false }
+		return date > logicalToday
+	}
+
+	private var suggestion: String? {
+		DateParser.suggestions(for: query).first
+	}
+
+	private var canJump: Bool {
+		parsedDate != nil && !isFutureDate
+	}
+
 	var body: some View {
 		VStack(spacing: 12) {
-			HStack {
-				Text("Jump to Date")
-					.font(.system(.title3, design: .monospaced, weight: .bold))
-				Spacer()
-				Button {
-					onDismiss()
-				} label: {
-					Image(systemName: "xmark.circle.fill")
-						.foregroundStyle(.secondary)
-						.font(.title3)
+			Text("Jump to Date")
+				.font(.system(.title3, design: .monospaced, weight: .bold))
+				.frame(maxWidth: .infinity, alignment: .leading)
+
+			ZStack(alignment: .leading) {
+				// Suggestion ghost text
+				if let suggestion, !query.isEmpty, suggestion != query.lowercased() {
+					Text(suggestion)
+						.font(.system(.body, design: .monospaced))
+						.foregroundStyle(.quaternary)
+						.padding(.horizontal, 6)
+						.padding(.vertical, 4)
 				}
-				.buttonStyle(.plain)
+
+				TextField("today, yesterday, last monday...", text: $query)
+					.font(.system(.body, design: .monospaced))
+					.textFieldStyle(.roundedBorder)
+					.focused($isFocused)
+					.onSubmit {
+						if canJump, let date = parsedDate {
+							onJump(date)
+						}
+					}
+					.onKeyPress(.tab) {
+						if let suggestion {
+							query = suggestion
+							return .handled
+						}
+						return .ignored
+					}
+					.onKeyPress(.rightArrow) {
+						if let suggestion, query.count < suggestion.count {
+							query = suggestion
+							return .handled
+						}
+						return .ignored
+					}
 			}
 
-			TextField("today, yesterday, last monday, march 21...", text: $query)
-				.font(.system(.body, design: .monospaced))
-				.textFieldStyle(.roundedBorder)
-				.focused($isFocused)
-				.onSubmit {
-					if let date = parsedDate {
-						onJump(date)
-					}
-				}
-
+			// Status
 			if !query.isEmpty {
 				HStack {
 					if let date = parsedDate {
-						Image(systemName: "checkmark.circle.fill")
-							.foregroundStyle(.green)
-						Text(DateFormatting.displayDate(date))
-							.font(.system(.body, design: .monospaced))
-						Text("(\(date))")
-							.font(.system(.caption, design: .monospaced))
-							.foregroundStyle(.secondary)
+						if isFutureDate {
+							Image(systemName: "xmark.circle.fill")
+								.foregroundStyle(.red)
+							Text("Cannot jump to future dates")
+								.font(.system(.body, design: .monospaced))
+								.foregroundStyle(.red)
+						} else {
+							Image(systemName: "checkmark.circle.fill")
+								.foregroundStyle(.green)
+							Text(DateFormatting.displayDate(date))
+								.font(.system(.body, design: .monospaced))
+
+							if !hasNotes(date) && date != logicalToday {
+								Text("(no notes)")
+									.font(.system(.caption, design: .monospaced))
+									.foregroundStyle(.orange)
+							}
+						}
 					} else {
 						Image(systemName: "questionmark.circle")
 							.foregroundStyle(.orange)
@@ -60,7 +105,7 @@ struct DateJumpOverlay: View {
 			}
 
 			HStack {
-				Text("Try: today, yesterday, 3 days ago, last friday, march 21, 2026-03-21")
+				Text("Tab to autocomplete. Esc to close.")
 					.font(.caption)
 					.foregroundStyle(.tertiary)
 				Spacer()

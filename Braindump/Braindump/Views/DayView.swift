@@ -2,7 +2,6 @@ import SwiftUI
 
 struct DayView: View {
 	@Bindable var appState: AppState
-	@FocusState private var draftFocused: Bool
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 12) {
@@ -16,25 +15,23 @@ struct DayView: View {
 						.foregroundStyle(.tertiary)
 						.frame(width: 70, alignment: .leading)
 
-					TextEditor(text: $appState.draftContent)
-						.font(.system(.body, design: .monospaced))
-						.scrollContentBackground(.hidden)
-						.focused($draftFocused)
-						.frame(minHeight: 24, maxHeight: 200)
-						.onChange(of: appState.draftContent) { oldValue, newValue in
-							if appState.settings.enterSubmits && newValue.hasSuffix("\n") && !newValue.hasSuffix("\n\n") {
-								let trimmed = newValue.trimmingCharacters(in: .newlines)
-								if !trimmed.isEmpty && oldValue == trimmed {
-									appState.draftContent = trimmed
-									appState.submitDraft()
-								}
+					AutoClosingTextEditor(
+						text: $appState.draftContent,
+						onSubmit: { appState.submitDraft() },
+						autoCorrect: appState.settings.autoCorrect
+					)
+					.frame(minHeight: 24, maxHeight: 200)
+					.onChange(of: appState.draftContent) { oldValue, newValue in
+						if appState.settings.enterSubmits && newValue.hasSuffix("\n") && !newValue.hasSuffix("\n\n") {
+							let trimmed = newValue.trimmingCharacters(in: .newlines)
+							if !trimmed.isEmpty && oldValue == trimmed {
+								appState.draftContent = trimmed
+								appState.submitDraft()
 							}
 						}
+					}
 				}
 				.padding(.vertical, 4)
-				.onAppear {
-					draftFocused = true
-				}
 			}
 
 			// Existing entries
@@ -46,6 +43,7 @@ struct DayView: View {
 						isProcessed: appState.isReadOnly,
 						isEditing: appState.editingEntryID == entry.id,
 						editContent: $appState.editingContent,
+						autoCorrect: appState.settings.autoCorrect,
 						onTap: {
 							appState.startEditing(id: entry.id)
 						},
@@ -86,6 +84,7 @@ struct DayView: View {
 
 			Text(DateFormatting.displayDate(appState.currentDate))
 				.font(.system(.headline, design: .monospaced))
+				.foregroundStyle(Color(hex: appState.settings.headerColorHex))
 
 			if appState.isToday {
 				Text("Today")

@@ -43,6 +43,7 @@ struct ContentView: View {
 				DateJumpOverlay(
 					query: $appState.dateJumpQuery,
 					dayStartHour: appState.settings.dayStartHour,
+					hasNotes: { appState.hasNotesForDate($0) },
 					onJump: { date in
 						appState.jumpToDate(date)
 					},
@@ -54,7 +55,7 @@ struct ContentView: View {
 			}
 		}
 		.frame(minWidth: 300, minHeight: 200)
-		.background(.background)
+		.background(Color(hex: appState.settings.backgroundColorHex))
 		.keyboardShortcut("n", modifiers: .command, onPress: {
 			appState.startDraft()
 		})

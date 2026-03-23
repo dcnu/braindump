@@ -110,11 +110,20 @@ final class AppState {
 	}
 
 	func submitDraft() {
-		let content = draftContent.trimmingCharacters(in: .whitespacesAndNewlines)
+		var content = draftContent.trimmingCharacters(in: .whitespacesAndNewlines)
 		isDrafting = false
 		draftContent = ""
 
 		guard !content.isEmpty else { return }
+
+		if settings.autoCapitalize {
+			content = capitalizeFirstLetter(content)
+		}
+
+		// Evaluate math blocks
+		if MathEvaluator.containsMathBlock(content) {
+			content = MathEvaluator.processContent(content)
+		}
 
 		// Ensure we're on today
 		if !isToday {
@@ -165,7 +174,11 @@ final class AppState {
 			return
 		}
 
-		let content = editingContent.trimmingCharacters(in: .whitespacesAndNewlines)
+		var content = editingContent.trimmingCharacters(in: .whitespacesAndNewlines)
+
+		if settings.autoCapitalize {
+			content = capitalizeFirstLetter(content)
+		}
 
 		if content.isEmpty {
 			file.entries.remove(at: idx)
@@ -280,5 +293,16 @@ final class AppState {
 		loadIndex()
 		navigateToToday()
 		startFileWatcher()
+	}
+
+	// MARK: - Helpers
+
+	func hasNotesForDate(_ date: String) -> Bool {
+		(try? fileStore.loadDailyFile(for: date)) != nil
+	}
+
+	private func capitalizeFirstLetter(_ text: String) -> String {
+		guard let first = text.first else { return text }
+		return first.uppercased() + text.dropFirst()
 	}
 }

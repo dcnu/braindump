@@ -97,6 +97,31 @@ final class AppSettings {
 		set { UserDefaults.standard.set(newValue, forKey: "enterSubmits") }
 	}
 
+	var autoCapitalize: Bool {
+		get { UserDefaults.standard.object(forKey: "autoCapitalize") != nil ? UserDefaults.standard.bool(forKey: "autoCapitalize") : true }
+		set { UserDefaults.standard.set(newValue, forKey: "autoCapitalize") }
+	}
+
+	var autoCorrect: Bool {
+		get { UserDefaults.standard.object(forKey: "autoCorrect") != nil ? UserDefaults.standard.bool(forKey: "autoCorrect") : false }
+		set { UserDefaults.standard.set(newValue, forKey: "autoCorrect") }
+	}
+
+	var fontColorHex: String {
+		get { UserDefaults.standard.string(forKey: "fontColorHex") ?? "#000000" }
+		set { UserDefaults.standard.set(newValue, forKey: "fontColorHex") }
+	}
+
+	var headerColorHex: String {
+		get { UserDefaults.standard.string(forKey: "headerColorHex") ?? "#1a1a1a" }
+		set { UserDefaults.standard.set(newValue, forKey: "headerColorHex") }
+	}
+
+	var backgroundColorHex: String {
+		get { UserDefaults.standard.string(forKey: "backgroundColorHex") ?? "#ffffff" }
+		set { UserDefaults.standard.set(newValue, forKey: "backgroundColorHex") }
+	}
+
 	var appearanceMode: AppearanceMode {
 		get { AppearanceMode(rawValue: UserDefaults.standard.string(forKey: "appearanceMode") ?? "system") ?? .system }
 		set { UserDefaults.standard.set(newValue.rawValue, forKey: "appearanceMode") }

@@ -12,6 +12,9 @@ enum TokenKind: CaseIterable {
 	case blockquote
 	case tag
 	case heading
+	case keyword
+	case string
+	case number
 }
 
 struct HighlightTheme {
@@ -77,6 +80,16 @@ struct HighlightTheme {
 				.heading: TokenStyle(
 					foregroundColor: NSColor.labelColor,
 					font: boldMono
+				),
+				.keyword: TokenStyle(
+					foregroundColor: NSColor.systemBlue,
+					font: boldMono
+				),
+				.string: TokenStyle(
+					foregroundColor: NSColor.systemGreen
+				),
+				.number: TokenStyle(
+					foregroundColor: NSColor.systemOrange
 				),
 			],
 			baseFont: monoFont,

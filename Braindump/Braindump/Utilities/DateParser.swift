@@ -1,6 +1,19 @@
 import Foundation
 
 enum DateParser {
+	private static let keywords = [
+		"today", "yesterday", "tomorrow", "last week",
+		"last monday", "last tuesday", "last wednesday", "last thursday", "last friday", "last saturday", "last sunday",
+		"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+	]
+
+	/// Return keyword suggestions matching the given prefix.
+	static func suggestions(for input: String) -> [String] {
+		let text = input.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+		guard !text.isEmpty else { return [] }
+		return keywords.filter { $0.hasPrefix(text) && $0 != text }
+	}
+
 	/// Parse a natural language date string into yyyy-MM-dd format.
 	/// Returns nil if the input can't be parsed.
 	static func parse(_ input: String, relativeTo now: Date = Date(), dayStartHour: Int = 2, timeZone: TimeZone = .current) -> String? {

@@ -20,8 +20,10 @@ struct SettingsView: View {
 		Form {
 			storageSection
 			appearanceSection
+			colorsSection
 			fontSection
 			entriesSection
+			textCleanupSection
 			hotkeySection
 			startupSection
 		}
@@ -78,6 +80,51 @@ struct SettingsView: View {
 					.font(.system(.body, design: .monospaced))
 					.foregroundStyle(.secondary)
 			}
+		}
+	}
+
+	// MARK: - Colors
+
+	private var colorsSection: some View {
+		Section("Colors") {
+			ColorPicker("Text color", selection: Binding(
+				get: { Color(hex: appState.settings.fontColorHex) },
+				set: { appState.settings.fontColorHex = $0.toHex() }
+			))
+
+			ColorPicker("Header color", selection: Binding(
+				get: { Color(hex: appState.settings.headerColorHex) },
+				set: { appState.settings.headerColorHex = $0.toHex() }
+			))
+
+			ColorPicker("Background color", selection: Binding(
+				get: { Color(hex: appState.settings.backgroundColorHex) },
+				set: { appState.settings.backgroundColorHex = $0.toHex() }
+			))
+
+			Text("Timestamp color is derived from text color at 50% opacity.")
+				.font(.caption)
+				.foregroundStyle(.secondary)
+		}
+	}
+
+	// MARK: - Text Cleanup
+
+	private var textCleanupSection: some View {
+		Section("Text Cleanup") {
+			Toggle("Auto-capitalize sentences", isOn: Binding(
+				get: { appState.settings.autoCapitalize },
+				set: { appState.settings.autoCapitalize = $0 }
+			))
+
+			Toggle("Spelling auto-correct", isOn: Binding(
+				get: { appState.settings.autoCorrect },
+				set: { appState.settings.autoCorrect = $0 }
+			))
+
+			Text("Uses macOS system spelling correction.")
+				.font(.caption)
+				.foregroundStyle(.secondary)
 		}
 	}
 

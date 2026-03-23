@@ -6,6 +6,7 @@ struct EntryRow: View {
 	let isProcessed: Bool
 	let isEditing: Bool
 	@Binding var editContent: String
+	var autoCorrect: Bool = false
 	let onTap: () -> Void
 	let onSubmit: () -> Void
 	let onDelete: () -> Void
@@ -18,10 +19,12 @@ struct EntryRow: View {
 				.frame(width: 70, alignment: .leading)
 
 			if isEditing {
-				TextEditor(text: $editContent)
-					.font(.system(.body, design: .monospaced))
-					.scrollContentBackground(.hidden)
-					.frame(minHeight: 24, maxHeight: 200)
+				AutoClosingTextEditor(
+					text: $editContent,
+					onSubmit: onSubmit,
+					autoCorrect: autoCorrect
+				)
+				.frame(minHeight: 24, maxHeight: 200)
 			} else {
 				Text(entry.content.isEmpty ? " " : entry.content)
 					.font(.system(.body, design: .monospaced))

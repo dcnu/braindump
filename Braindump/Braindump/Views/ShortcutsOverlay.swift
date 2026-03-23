@@ -12,6 +12,7 @@ struct ShortcutsOverlay: View {
 		("Entries", [
 			("CMD + N", "New entry"),
 			("CMD + Enter", "Submit entry"),
+			("CMD + L", "Insert link"),
 			("Escape", "Cancel draft / edit"),
 			("CMD + Delete", "Delete entry"),
 		]),
