@@ -145,15 +145,7 @@ struct SettingsView: View {
 				Text("Edited").tag(SortKey.edited)
 			}
 
-			Picker("Entry order", selection: Binding(
-				get: { appState.settings.entryOrder },
-				set: { appState.settings.entryOrder = $0 }
-			)) {
-				Text("Newest first").tag(EntryOrder.reverseChronological)
-				Text("Oldest first").tag(EntryOrder.chronological)
-			}
-
-			Picker("Timestamp mode", selection: Binding(
+Picker("Timestamp mode", selection: Binding(
 				get: { appState.settings.timestampMode },
 				set: { appState.settings.timestampMode = $0 }
 			)) {
