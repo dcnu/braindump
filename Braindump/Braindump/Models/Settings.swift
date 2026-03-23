@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 
 enum SortKey: String, CaseIterable {
 	case created
@@ -25,7 +26,33 @@ struct KeyCombo: Equatable {
 	var key: UInt16
 	var modifiers: UInt
 
-	static let defaultHotkey = KeyCombo(key: 49, modifiers: 262144) // Ctrl+Space
+	// Ctrl+Shift+Space — avoids Ctrl+Space (input source) and CMD+Space (Spotlight)
+	static let defaultHotkey = KeyCombo(key: 49, modifiers: 393475) // control + shift
+
+	var displayString: String {
+		var parts: [String] = []
+		let mods = NSEvent.ModifierFlags(rawValue: modifiers)
+		if mods.contains(.control) { parts.append("Ctrl") }
+		if mods.contains(.option) { parts.append("Opt") }
+		if mods.contains(.shift) { parts.append("Shift") }
+		if mods.contains(.command) { parts.append("CMD") }
+		parts.append(KeyCombo.keyName(for: key))
+		return parts.joined(separator: " + ")
+	}
+
+	static func keyName(for keyCode: UInt16) -> String {
+		let names: [UInt16: String] = [
+			0: "A", 1: "S", 2: "D", 3: "F", 4: "H", 5: "G", 6: "Z", 7: "X",
+			8: "C", 9: "V", 11: "B", 12: "Q", 13: "W", 14: "E", 15: "R",
+			16: "Y", 17: "T", 31: "O", 32: "U", 34: "I", 35: "P", 37: "L",
+			38: "J", 40: "K", 45: "N", 46: "M",
+			18: "1", 19: "2", 20: "3", 21: "4", 23: "5", 22: "6", 26: "7",
+			28: "8", 25: "9", 29: "0",
+			36: "Return", 48: "Tab", 49: "Space", 51: "Delete", 53: "Escape",
+			123: "Left", 124: "Right", 125: "Down", 126: "Up",
+		]
+		return names[keyCode] ?? "Key(\(keyCode))"
+	}
 }
 
 @Observable
@@ -48,6 +75,21 @@ final class AppSettings {
 	var entryOrder: EntryOrder {
 		get { EntryOrder(rawValue: UserDefaults.standard.string(forKey: "entryOrder") ?? "reverseChronological") ?? .reverseChronological }
 		set { UserDefaults.standard.set(newValue.rawValue, forKey: "entryOrder") }
+	}
+
+	var globalHotkey: KeyCombo {
+		get {
+			let key = UserDefaults.standard.object(forKey: "hotkeyKeyCode") as? Int
+			let mods = UserDefaults.standard.object(forKey: "hotkeyModifiers") as? Int
+			if let key, let mods {
+				return KeyCombo(key: UInt16(key), modifiers: UInt(mods))
+			}
+			return KeyCombo.defaultHotkey
+		}
+		set {
+			UserDefaults.standard.set(Int(newValue.key), forKey: "hotkeyKeyCode")
+			UserDefaults.standard.set(Int(newValue.modifiers), forKey: "hotkeyModifiers")
+		}
 	}
 
 	var enterSubmits: Bool {

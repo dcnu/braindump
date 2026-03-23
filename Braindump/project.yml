@@ -21,7 +21,7 @@ targets:
     info:
       path: Braindump/Info.plist
       properties:
-        LSUIElement: true
+        LSUIElement: false
         CFBundleDisplayName: Braindump
         CFBundleShortVersionString: "1.0.0"
         CFBundleVersion: "1"

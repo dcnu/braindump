@@ -1,11 +1,13 @@
 import SwiftUI
 
 struct ShortcutsOverlay: View {
+	let globalHotkeyDisplay: String
 	let onDismiss: () -> Void
 
-	private let shortcuts: [(String, [(String, String)])] = [
+	private var shortcuts: [(String, [(String, String)])] {
+		[
 		("Global", [
-			("Ctrl + Space", "Toggle panel"),
+			(globalHotkeyDisplay, "Toggle panel"),
 		]),
 		("Entries", [
 			("CMD + N", "New entry"),
@@ -22,7 +24,8 @@ struct ShortcutsOverlay: View {
 			("CMD + /", "Keyboard shortcuts"),
 			("CMD + Q", "Quit"),
 		]),
-	]
+		]
+	}
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 16) {

@@ -167,23 +167,44 @@ struct SettingsView: View {
 
 	// MARK: - Hotkey
 
+	@State private var isRecordingHotkey = false
+
 	private var hotkeySection: some View {
 		Section("Global Hotkey") {
 			HStack {
 				Text("Toggle panel")
 				Spacer()
-				Text("Ctrl + Space")
-					.font(.system(.body, design: .monospaced))
-					.foregroundStyle(.secondary)
-					.padding(.horizontal, 8)
-					.padding(.vertical, 4)
-					.background(
-						RoundedRectangle(cornerRadius: 4)
-							.fill(.quaternary)
-					)
-			}
 
-			Text("Requires Accessibility permission in System Settings.")
+				Button {
+					isRecordingHotkey = true
+				} label: {
+					if isRecordingHotkey {
+						Text("Press a key combo...")
+							.font(.system(.body, design: .monospaced))
+							.foregroundStyle(.orange)
+					} else {
+						Text(appState.settings.globalHotkey.displayString)
+							.font(.system(.body, design: .monospaced))
+							.foregroundStyle(.secondary)
+					}
+				}
+				.buttonStyle(.plain)
+				.padding(.horizontal, 8)
+				.padding(.vertical, 4)
+				.background(
+					RoundedRectangle(cornerRadius: 4)
+						.fill(isRecordingHotkey ? Color.orange.opacity(0.1) : Color(.quaternaryLabelColor))
+				)
+			}
+			.background(
+				HotkeyRecorderView(isRecording: $isRecordingHotkey) { combo in
+					appState.settings.globalHotkey = combo
+					NotificationCenter.default.post(name: .hotkeyChanged, object: nil)
+				}
+				.frame(width: 0, height: 0)
+			)
+
+			Text("Click the shortcut, then press your desired key combination. Requires Accessibility permission.")
 				.font(.caption)
 				.foregroundStyle(.secondary)
 		}

@@ -157,9 +157,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 	// MARK: - Global Hotkey
 
 	private func setupHotkey() {
+		let combo = appState.settings.globalHotkey
 		hotkeyManager = HotkeyManager(
-			keyCode: UInt16(KeyCombo.defaultHotkey.key),
-			modifierFlags: .control
+			keyCode: combo.key,
+			modifierFlags: NSEvent.ModifierFlags(rawValue: combo.modifiers)
 		) { [weak self] in
 			DispatchQueue.main.async {
 				self?.togglePanel()
@@ -169,6 +170,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		if HotkeyManager.checkAccessibilityOnce() {
 			hotkeyManager?.start()
 		}
+
+		NotificationCenter.default.addObserver(
+			self,
+			selector: #selector(hotkeyChanged),
+			name: .hotkeyChanged,
+			object: nil
+		)
+	}
+
+	@objc private func hotkeyChanged() {
+		let combo = appState.settings.globalHotkey
+		hotkeyManager?.stop()
+		hotkeyManager?.updateHotkey(
+			keyCode: combo.key,
+			modifierFlags: NSEvent.ModifierFlags(rawValue: combo.modifiers)
+		)
+		hotkeyManager?.start()
 	}
 
 	// MARK: - App Lifecycle

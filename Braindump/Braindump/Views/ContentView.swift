@@ -29,7 +29,9 @@ struct ContentView: View {
 						appState.showingShortcuts = false
 					}
 
-				ShortcutsOverlay {
+				ShortcutsOverlay(
+					globalHotkeyDisplay: appState.settings.globalHotkey.displayString
+				) {
 					appState.showingShortcuts = false
 				}
 			}
@@ -77,6 +79,7 @@ struct ContentView: View {
 
 extension Notification.Name {
 	static let openSettings = Notification.Name("com.dcnu.braindump.openSettings")
+	static let hotkeyChanged = Notification.Name("com.dcnu.braindump.hotkeyChanged")
 }
 
 extension View {
