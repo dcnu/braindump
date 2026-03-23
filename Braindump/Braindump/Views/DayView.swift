@@ -8,7 +8,7 @@ struct DayView: View {
 		VStack(alignment: .leading, spacing: 12) {
 			dayHeader
 
-			// Draft entry (inline, appears when CMD+N is pressed)
+			// Draft entry (inline, only on today)
 			if appState.isDrafting {
 				HStack(alignment: .top, spacing: 12) {
 					Text("--:--:--")
@@ -23,7 +23,6 @@ struct DayView: View {
 						.frame(minHeight: 24, maxHeight: 200)
 						.onChange(of: appState.draftContent) { oldValue, newValue in
 							if appState.settings.enterSubmits && newValue.hasSuffix("\n") && !newValue.hasSuffix("\n\n") {
-								// Check it was a plain Enter (not Shift+Enter which adds \n without triggering submit)
 								let trimmed = newValue.trimmingCharacters(in: .newlines)
 								if !trimmed.isEmpty && oldValue == trimmed {
 									appState.draftContent = trimmed
@@ -44,7 +43,7 @@ struct DayView: View {
 					EntryRow(
 						entry: entry,
 						displayTimestamp: appState.displayTimestamp(entry.timestamp),
-						isProcessed: appState.isCurrentDayProcessed,
+						isProcessed: appState.isReadOnly,
 						isEditing: appState.editingEntryID == entry.id,
 						editContent: $appState.editingContent,
 						onTap: {
@@ -60,12 +59,21 @@ struct DayView: View {
 				}
 			}
 
+			// Empty state
 			if !appState.isDrafting && appState.dailyFile == nil {
-				Text("Press CMD+N to add an entry")
-					.font(.system(.body, design: .monospaced))
-					.foregroundStyle(.tertiary)
-					.frame(maxWidth: .infinity, alignment: .center)
-					.padding(.top, 20)
+				if appState.isToday {
+					Text("Press CMD+N to add an entry")
+						.font(.system(.body, design: .monospaced))
+						.foregroundStyle(.tertiary)
+						.frame(maxWidth: .infinity, alignment: .center)
+						.padding(.top, 20)
+				} else {
+					Text("No entries on this day")
+						.font(.system(.body, design: .monospaced))
+						.foregroundStyle(.tertiary)
+						.frame(maxWidth: .infinity, alignment: .center)
+						.padding(.top, 20)
+				}
 			}
 		}
 	}
@@ -79,9 +87,21 @@ struct DayView: View {
 			Text(DateFormatting.displayDate(appState.currentDate))
 				.font(.system(.headline, design: .monospaced))
 
-			if appState.isCurrentDayProcessed {
+			if appState.isToday {
+				Text("Today")
+					.font(.system(.caption, design: .monospaced))
+					.foregroundStyle(.blue)
+			}
+
+			if appState.isReadOnly && !appState.isToday {
 				Image(systemName: "lock.fill")
 					.foregroundStyle(.secondary)
+					.font(.system(.caption))
+			}
+
+			if appState.isCurrentDayProcessed {
+				Image(systemName: "checkmark.circle.fill")
+					.foregroundStyle(.green)
 					.font(.system(.caption))
 			}
 

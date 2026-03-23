@@ -7,16 +7,18 @@ final class AppState {
 	var dailyFile: DailyFile?
 	var index: [IndexEntry] = []
 
-	// Draft state — user is composing a new entry
+	// Draft state
 	var draftContent: String = ""
 	var isDrafting: Bool = false
 
-	// Edit state — user is editing an existing entry
+	// Edit state
 	var editingEntryID: UUID? = nil
 	var editingContent: String = ""
 
 	var isPanelVisible: Bool = false
 	var showingShortcuts: Bool = false
+	var showingDateJump: Bool = false
+	var dateJumpQuery: String = ""
 
 	let settings: AppSettings
 	private(set) var fileStore: FileStore
@@ -35,6 +37,20 @@ final class AppState {
 		setup()
 	}
 
+	// MARK: - Computed
+
+	var isToday: Bool {
+		currentDate == DateFormatting.logicalDate(dayStartHour: settings.dayStartHour)
+	}
+
+	var isReadOnly: Bool {
+		!isToday || isCurrentDayProcessed
+	}
+
+	var isCurrentDayProcessed: Bool {
+		dailyFile?.frontMatter.status == .processed
+	}
+
 	// MARK: - Setup
 
 	private func setup() {
@@ -48,23 +64,23 @@ final class AppState {
 	// MARK: - Navigation
 
 	func navigateDay(offset: Int) {
-		let dates = index.map(\.date).sorted()
-		guard !dates.isEmpty else { return }
+		// Use filesystem directly — no stale index dependency
+		guard let dates = try? fileStore.listDailyFiles(), !dates.isEmpty else { return }
 
-		if let currentIndex = dates.firstIndex(of: currentDate) {
-			let newIndex = currentIndex + offset
-			if newIndex >= 0 && newIndex < dates.count {
-				currentDate = dates[newIndex]
+		if let idx = dates.firstIndex(of: currentDate) {
+			let newIdx = idx + offset
+			if newIdx >= 0 && newIdx < dates.count {
+				currentDate = dates[newIdx]
 				loadCurrentDay()
 			}
-		} else if offset > 0 {
-			if let next = dates.first(where: { $0 > currentDate }) {
-				currentDate = next
+		} else if offset < 0 {
+			if let prev = dates.last(where: { $0 < currentDate }) {
+				currentDate = prev
 				loadCurrentDay()
 			}
 		} else {
-			if let prev = dates.last(where: { $0 < currentDate }) {
-				currentDate = prev
+			if let next = dates.first(where: { $0 > currentDate }) {
+				currentDate = next
 				loadCurrentDay()
 			}
 		}
@@ -75,9 +91,19 @@ final class AppState {
 		loadCurrentDay()
 	}
 
-	// MARK: - Draft (new entry)
+	func jumpToDate(_ dateString: String) {
+		currentDate = dateString
+		loadCurrentDay()
+		showingDateJump = false
+		dateJumpQuery = ""
+	}
+
+	// MARK: - Draft (new entry) — always targets today
 
 	func startDraft() {
+		if !isToday {
+			navigateToToday()
+		}
 		guard !isCurrentDayProcessed else { return }
 		isDrafting = true
 		draftContent = ""
@@ -89,6 +115,11 @@ final class AppState {
 		draftContent = ""
 
 		guard !content.isEmpty else { return }
+
+		// Ensure we're on today
+		if !isToday {
+			navigateToToday()
+		}
 
 		let now = Date()
 		let timestamp = DateFormatting.entryTimestamp(from: now)
@@ -115,17 +146,18 @@ final class AppState {
 		draftContent = ""
 	}
 
-	// MARK: - Edit (existing entry)
+	// MARK: - Edit (existing entry) — only today
 
 	func startEditing(id: UUID) {
-		guard !isCurrentDayProcessed,
+		guard isToday, !isCurrentDayProcessed,
 			  let entry = dailyFile?.entries.first(where: { $0.id == id }) else { return }
 		editingEntryID = id
 		editingContent = entry.content
 	}
 
 	func submitEdit() {
-		guard let entryID = editingEntryID,
+		guard isToday,
+			  let entryID = editingEntryID,
 			  var file = dailyFile,
 			  let idx = file.entries.firstIndex(where: { $0.id == entryID }) else {
 			editingEntryID = nil
@@ -159,6 +191,7 @@ final class AppState {
 	}
 
 	func deleteEntry(id: UUID) {
+		guard isToday else { return }
 		guard var file = dailyFile else { return }
 		file.entries.removeAll { $0.id == id }
 
@@ -196,10 +229,6 @@ final class AppState {
 		case .h12:
 			return DateFormatting.to12Hour(timestamp)
 		}
-	}
-
-	var isCurrentDayProcessed: Bool {
-		dailyFile?.frontMatter.status == .processed
 	}
 
 	// MARK: - File Operations

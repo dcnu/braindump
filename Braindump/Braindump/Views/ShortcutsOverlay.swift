@@ -18,6 +18,7 @@ struct ShortcutsOverlay: View {
 		("Navigation", [
 			("CMD + Left", "Previous day"),
 			("CMD + Right", "Next day"),
+			("CMD + K", "Jump to date"),
 		]),
 		("App", [
 			("CMD + ,", "Settings"),

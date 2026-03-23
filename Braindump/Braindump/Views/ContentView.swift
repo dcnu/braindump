@@ -11,7 +11,6 @@ struct ContentView: View {
 						.padding()
 				}
 
-				// Shortcuts hint
 				HStack {
 					Spacer()
 					Text("CMD+/  Shortcuts")
@@ -22,18 +21,36 @@ struct ContentView: View {
 				}
 			}
 
-			if appState.showingShortcuts {
+			// Overlays
+			if appState.showingShortcuts || appState.showingDateJump {
 				Color.black.opacity(0.3)
 					.ignoresSafeArea()
 					.onTapGesture {
 						appState.showingShortcuts = false
+						appState.showingDateJump = false
 					}
+			}
 
+			if appState.showingShortcuts {
 				ShortcutsOverlay(
 					globalHotkeyDisplay: appState.settings.globalHotkey.displayString
 				) {
 					appState.showingShortcuts = false
 				}
+			}
+
+			if appState.showingDateJump {
+				DateJumpOverlay(
+					query: $appState.dateJumpQuery,
+					dayStartHour: appState.settings.dayStartHour,
+					onJump: { date in
+						appState.jumpToDate(date)
+					},
+					onDismiss: {
+						appState.showingDateJump = false
+						appState.dateJumpQuery = ""
+					}
+				)
 			}
 		}
 		.frame(minWidth: 300, minHeight: 200)
@@ -49,7 +66,10 @@ struct ContentView: View {
 			}
 		})
 		.keyboardShortcut(.escape, modifiers: [], onPress: {
-			if appState.showingShortcuts {
+			if appState.showingDateJump {
+				appState.showingDateJump = false
+				appState.dateJumpQuery = ""
+			} else if appState.showingShortcuts {
 				appState.showingShortcuts = false
 			} else if appState.isDrafting {
 				appState.cancelDraft()
@@ -73,6 +93,9 @@ struct ContentView: View {
 		})
 		.keyboardShortcut("/", modifiers: .command, onPress: {
 			appState.showingShortcuts.toggle()
+		})
+		.keyboardShortcut("k", modifiers: .command, onPress: {
+			appState.showingDateJump.toggle()
 		})
 	}
 }
