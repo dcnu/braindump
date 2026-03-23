@@ -61,12 +61,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 	private func showContextMenu() {
 		let menu = NSMenu()
 		menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ","))
+		menu.addItem(NSMenuItem(title: "Keyboard Shortcuts", action: #selector(showShortcuts), keyEquivalent: "/"))
 		menu.addItem(NSMenuItem.separator())
 		menu.addItem(NSMenuItem(title: "Quit Braindump", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
 
 		statusItem.menu = menu
 		statusItem.button?.performClick(nil)
 		statusItem.menu = nil
+	}
+
+	@objc private func showShortcuts() {
+		showPanel()
+		appState.showingShortcuts = true
 	}
 
 	@objc private func openSettings() {

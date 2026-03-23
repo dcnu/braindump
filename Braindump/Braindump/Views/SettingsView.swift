@@ -137,14 +137,6 @@ struct SettingsView: View {
 
 	private var entriesSection: some View {
 		Section("Entries") {
-			Picker("Sort days by", selection: Binding(
-				get: { appState.settings.sortKey },
-				set: { appState.settings.sortKey = $0 }
-			)) {
-				Text("Created").tag(SortKey.created)
-				Text("Edited").tag(SortKey.edited)
-			}
-
 			Toggle("Enter submits entry", isOn: Binding(
 				get: { appState.settings.enterSubmits },
 				set: { appState.settings.enterSubmits = $0 }

@@ -16,6 +16,7 @@ final class AppState {
 	var editingContent: String = ""
 
 	var isPanelVisible: Bool = false
+	var showingShortcuts: Bool = false
 
 	let settings: AppSettings
 	private(set) var fileStore: FileStore
