@@ -21,6 +21,16 @@ struct DayView: View {
 						.scrollContentBackground(.hidden)
 						.focused($draftFocused)
 						.frame(minHeight: 24, maxHeight: 200)
+						.onChange(of: appState.draftContent) { oldValue, newValue in
+							if appState.settings.enterSubmits && newValue.hasSuffix("\n") && !newValue.hasSuffix("\n\n") {
+								// Check it was a plain Enter (not Shift+Enter which adds \n without triggering submit)
+								let trimmed = newValue.trimmingCharacters(in: .newlines)
+								if !trimmed.isEmpty && oldValue == trimmed {
+									appState.draftContent = trimmed
+									appState.submitDraft()
+								}
+							}
+						}
 				}
 				.padding(.vertical, 4)
 				.onAppear {

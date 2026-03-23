@@ -145,13 +145,14 @@ struct SettingsView: View {
 				Text("Edited").tag(SortKey.edited)
 			}
 
-Picker("Timestamp mode", selection: Binding(
-				get: { appState.settings.timestampMode },
-				set: { appState.settings.timestampMode = $0 }
-			)) {
-				Text("Per block").tag(TimestampMode.perBlock)
-				Text("Per line").tag(TimestampMode.perLine)
-			}
+			Toggle("Enter submits entry", isOn: Binding(
+				get: { appState.settings.enterSubmits },
+				set: { appState.settings.enterSubmits = $0 }
+			))
+
+			Text("When enabled, pressing Enter creates a new timestamped entry. Use Shift+Enter for newlines.")
+				.font(.caption)
+				.foregroundStyle(.secondary)
 
 			Picker("Time format", selection: Binding(
 				get: { appState.settings.timeFormat },

@@ -15,11 +15,6 @@ enum EntryOrder: String, CaseIterable {
 	case reverseChronological
 }
 
-enum TimestampMode: String, CaseIterable {
-	case perBlock
-	case perLine
-}
-
 enum AppearanceMode: String, CaseIterable {
 	case system
 	case light
@@ -55,9 +50,9 @@ final class AppSettings {
 		set { UserDefaults.standard.set(newValue.rawValue, forKey: "entryOrder") }
 	}
 
-	var timestampMode: TimestampMode {
-		get { TimestampMode(rawValue: UserDefaults.standard.string(forKey: "timestampMode") ?? "perBlock") ?? .perBlock }
-		set { UserDefaults.standard.set(newValue.rawValue, forKey: "timestampMode") }
+	var enterSubmits: Bool {
+		get { UserDefaults.standard.object(forKey: "enterSubmits") != nil ? UserDefaults.standard.bool(forKey: "enterSubmits") : false }
+		set { UserDefaults.standard.set(newValue, forKey: "enterSubmits") }
 	}
 
 	var appearanceMode: AppearanceMode {
