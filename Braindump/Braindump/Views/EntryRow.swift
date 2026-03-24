@@ -9,6 +9,7 @@ struct EntryRow: View {
 	@Binding var editContent: String
 	var autoCorrect: Bool = false
 	var fontColor: Color = .primary
+	var fontColorHex: String = "#000000"
 	var timestampColor: Color = .secondary
 	let onTap: () -> Void
 	let onSubmit: () -> Void
@@ -25,9 +26,10 @@ struct EntryRow: View {
 				AutoClosingTextEditor(
 					text: $editContent,
 					onSubmit: onSubmit,
-					autoCorrect: autoCorrect
+					autoCorrect: autoCorrect,
+					fontColorHex: fontColorHex
 				)
-				.frame(minHeight: 24, maxHeight: 200)
+				.frame(minHeight: 24)
 			} else {
 				Text(entry.content.isEmpty ? " " : entry.content)
 					.font(.system(.body, design: .monospaced))

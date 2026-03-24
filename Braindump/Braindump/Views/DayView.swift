@@ -27,9 +27,10 @@ struct DayView: View {
 						text: $appState.draftContent,
 						onSubmit: { appState.submitDraft() },
 						autoCorrect: appState.settings.autoCorrect,
-						shouldFocus: true
+						shouldFocus: true,
+						fontColorHex: appState.settings.fontColorHex
 					)
-					.frame(minHeight: 24, maxHeight: 200)
+					.frame(minHeight: 24)
 					.onChange(of: appState.draftContent) { oldValue, newValue in
 						if appState.settings.enterSubmits && newValue.hasSuffix("\n") && !newValue.hasSuffix("\n\n") {
 							let trimmed = newValue.trimmingCharacters(in: .newlines)
@@ -56,6 +57,7 @@ struct DayView: View {
 						editContent: $appState.editingContent,
 						autoCorrect: appState.settings.autoCorrect,
 						fontColor: fontColor,
+						fontColorHex: appState.settings.fontColorHex,
 						timestampColor: timestampColor,
 						onTap: {
 							appState.selectedEntryID = entry.id

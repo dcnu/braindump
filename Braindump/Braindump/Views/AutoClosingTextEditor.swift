@@ -7,6 +7,7 @@ struct AutoClosingTextEditor: NSViewRepresentable {
 	var isEditable: Bool = true
 	var autoCorrect: Bool = false
 	var shouldFocus: Bool = false
+	var fontColorHex: String = "#000000"
 
 	func makeNSView(context: Context) -> NSScrollView {
 		let scrollView = NSScrollView()
@@ -61,7 +62,13 @@ struct AutoClosingTextEditor: NSViewRepresentable {
 
 		textView.isEditable = isEditable
 		textView.isAutomaticSpellingCorrectionEnabled = autoCorrect
-		textView.textColor = .labelColor
+		let hex = fontColorHex
+		textView.textColor = NSColor(
+			red: CGFloat(Int(hex.dropFirst().prefix(2), radix: 16) ?? 0) / 255,
+			green: CGFloat(Int(hex.dropFirst(3).prefix(2), radix: 16) ?? 0) / 255,
+			blue: CGFloat(Int(hex.dropFirst(5).prefix(2), radix: 16) ?? 0) / 255,
+			alpha: 1
+		)
 
 		if let scrollWidth = textView.enclosingScrollView?.contentSize.width, scrollWidth > 0 {
 			textView.frame.size.width = scrollWidth
