@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 	private var panel: NSWindow!
 	private var hotkeyManager: HotkeyManager?
 	private var settingsWindow: NSWindow?
+	private var localKeyMonitor: Any?
 	let appState = AppState()
 
 	func applicationDidFinishLaunching(_ notification: Notification) {
@@ -14,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		setupStatusItem()
 		setupPanel()
 		setupHotkey()
+		setupLocalKeyMonitor()
 
 		NotificationCenter.default.addObserver(
 			self,
@@ -28,6 +30,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 			name: .openSettings,
 			object: nil
 		)
+	}
+
+	// MARK: - Dock / CMD-Tab Reopen
+
+	func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+		if !flag {
+			showPanel()
+		}
+		return true
+	}
+
+	// MARK: - App-wide Key Monitor
+
+	private func setupLocalKeyMonitor() {
+		localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+			guard let self else { return event }
+			let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+
+			// CMD+N — new entry from anywhere
+			if mods == .command && event.keyCode == 45 {
+				if !self.panel.isVisible {
+					self.showPanel()
+				}
+				self.appState.startDraft()
+				return nil
+			}
+
+			return event
+		}
 	}
 
 	// MARK: - Status Item
@@ -76,12 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 	}
 
 	@objc private func openSettings() {
-		if let window = settingsWindow, window.isVisible {
-			NSApp.activate(ignoringOtherApps: true)
-			window.orderFrontRegardless()
-			return
-		}
-
+		// Always create a fresh settings window
 		let settingsView = SettingsView(appState: appState)
 		let window = NSWindow(
 			contentRect: NSRect(x: 0, y: 0, width: 460, height: 700),
@@ -246,5 +272,6 @@ extension AppDelegate: NSWindowDelegate {
 		guard let window = notification.object as? NSWindow,
 			  window == settingsWindow else { return }
 		window.orderOut(nil)
+		settingsWindow = nil
 	}
 }

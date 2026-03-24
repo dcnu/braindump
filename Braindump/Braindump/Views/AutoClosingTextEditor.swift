@@ -6,6 +6,7 @@ struct AutoClosingTextEditor: NSViewRepresentable {
 	var onSubmit: (() -> Void)?
 	var isEditable: Bool = true
 	var autoCorrect: Bool = false
+	var shouldFocus: Bool = false
 
 	func makeNSView(context: Context) -> NSScrollView {
 		let scrollView = NSScrollView()
@@ -22,7 +23,6 @@ struct AutoClosingTextEditor: NSViewRepresentable {
 		textView.isAutomaticSpellingCorrectionEnabled = autoCorrect
 		textView.autoresizingMask = [.width]
 
-		// Critical sizing fix: text view must fill the scroll view width
 		textView.minSize = NSSize(width: 0, height: 0)
 		textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
 
@@ -49,7 +49,6 @@ struct AutoClosingTextEditor: NSViewRepresentable {
 		guard let textView = context.coordinator.textView else { return }
 		guard !context.coordinator.isUpdating else { return }
 
-		// Sync text from binding to NSTextView
 		if textView.string != text {
 			let cursorPos = textView.selectedRange().location
 			textView.string = text
@@ -64,10 +63,17 @@ struct AutoClosingTextEditor: NSViewRepresentable {
 		textView.isAutomaticSpellingCorrectionEnabled = autoCorrect
 		textView.textColor = .labelColor
 
-		// Ensure text view width matches scroll view
 		if let scrollWidth = textView.enclosingScrollView?.contentSize.width, scrollWidth > 0 {
 			textView.frame.size.width = scrollWidth
 			textView.textContainer?.containerSize = NSSize(width: scrollWidth, height: CGFloat.greatestFiniteMagnitude)
+		}
+
+		// One-shot focus: make first responder once, then stop
+		if shouldFocus && !context.coordinator.didFocus {
+			context.coordinator.didFocus = true
+			DispatchQueue.main.async {
+				textView.window?.makeFirstResponder(textView)
+			}
 		}
 	}
 
@@ -79,5 +85,6 @@ struct AutoClosingTextEditor: NSViewRepresentable {
 		var textView: BraindumpTextView?
 		var scrollView: NSScrollView?
 		var isUpdating = false
+		var didFocus = false
 	}
 }

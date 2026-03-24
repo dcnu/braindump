@@ -56,9 +56,6 @@ struct ContentView: View {
 		}
 		.frame(minWidth: 300, minHeight: 200)
 		.background(Color(hex: appState.settings.backgroundColorHex))
-		.keyboardShortcut("n", modifiers: .command, onPress: {
-			appState.startDraft()
-		})
 		.keyboardShortcut(.return, modifiers: .command, onPress: {
 			if appState.isDrafting {
 				appState.submitDraft()

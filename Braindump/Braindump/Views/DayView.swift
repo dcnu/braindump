@@ -26,7 +26,8 @@ struct DayView: View {
 					AutoClosingTextEditor(
 						text: $appState.draftContent,
 						onSubmit: { appState.submitDraft() },
-						autoCorrect: appState.settings.autoCorrect
+						autoCorrect: appState.settings.autoCorrect,
+						shouldFocus: true
 					)
 					.frame(minHeight: 24, maxHeight: 200)
 					.onChange(of: appState.draftContent) { oldValue, newValue in
