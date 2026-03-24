@@ -121,6 +121,7 @@ struct ContentView: View {
 extension Notification.Name {
 	static let openSettings = Notification.Name("com.dcnu.braindump.openSettings")
 	static let hotkeyChanged = Notification.Name("com.dcnu.braindump.hotkeyChanged")
+	static let settingsChanged = Notification.Name("com.dcnu.braindump.settingsChanged")
 }
 
 extension View {

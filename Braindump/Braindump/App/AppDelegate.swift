@@ -30,6 +30,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 			name: .openSettings,
 			object: nil
 		)
+
+		NotificationCenter.default.addObserver(
+			self,
+			selector: #selector(settingsChanged),
+			name: .settingsChanged,
+			object: nil
+		)
+	}
+
+	@objc private func settingsChanged() {
+		updatePanelBackground()
+		applyAppearance(appState.settings.appearanceMode)
 	}
 
 	// MARK: - Dock / CMD-Tab Reopen

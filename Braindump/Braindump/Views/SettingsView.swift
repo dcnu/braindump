@@ -31,12 +31,14 @@ struct SettingsView: View {
 			HStack {
 				Button("Reset to Defaults") {
 					appState.settings.resetToDefaults()
+					NotificationCenter.default.post(name: .settingsChanged, object: nil)
 				}
 				.foregroundStyle(.red)
 
 				Spacer()
 
-				Button("Done") {
+				Button("Save") {
+					NotificationCenter.default.post(name: .settingsChanged, object: nil)
 					NSApp.keyWindow?.close()
 				}
 				.keyboardShortcut(.return, modifiers: [])
