@@ -64,6 +64,8 @@ struct ContentView: View {
 				appState.submitDraft()
 			} else if appState.editingEntryID != nil {
 				appState.submitEdit()
+			} else if let id = appState.selectedEntryID {
+				appState.startEditing(id: id)
 			}
 		})
 		.keyboardShortcut(.escape, modifiers: [], onPress: {
@@ -76,6 +78,24 @@ struct ContentView: View {
 				appState.cancelDraft()
 			} else if appState.editingEntryID != nil {
 				appState.cancelEdit()
+			}
+		})
+		.keyboardShortcut(.upArrow, modifiers: .command, onPress: {
+			appState.selectEntry(offset: -1)
+		})
+		.keyboardShortcut(.downArrow, modifiers: .command, onPress: {
+			appState.selectEntry(offset: 1)
+		})
+		.keyboardShortcut(.upArrow, modifiers: [], onPress: {
+			if !appState.isDrafting && appState.editingEntryID == nil {
+				appState.selectEntry(offset: -1)
+				return
+			}
+		})
+		.keyboardShortcut(.downArrow, modifiers: [], onPress: {
+			if !appState.isDrafting && appState.editingEntryID == nil {
+				appState.selectEntry(offset: 1)
+				return
 			}
 		})
 		.keyboardShortcut(.leftArrow, modifiers: .command, onPress: {

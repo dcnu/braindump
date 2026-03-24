@@ -11,7 +11,8 @@ final class AppState {
 	var draftContent: String = ""
 	var isDrafting: Bool = false
 
-	// Edit state
+	// Selection + edit state
+	var selectedEntryID: UUID? = nil
 	var editingEntryID: UUID? = nil
 	var editingContent: String = ""
 
@@ -153,6 +154,24 @@ final class AppState {
 	func cancelDraft() {
 		isDrafting = false
 		draftContent = ""
+	}
+
+	// MARK: - Entry Selection
+
+	func selectEntry(offset: Int) {
+		let entries = displayEntries()
+		guard !entries.isEmpty else { return }
+
+		if let current = selectedEntryID,
+		   let idx = entries.firstIndex(where: { $0.id == current }) {
+			let newIdx = idx + offset
+			if newIdx >= 0 && newIdx < entries.count {
+				selectedEntryID = entries[newIdx].id
+			}
+		} else {
+			// Nothing selected — select first or last based on direction
+			selectedEntryID = offset > 0 ? entries.first?.id : entries.last?.id
+		}
 	}
 
 	// MARK: - Edit (existing entry) — only today

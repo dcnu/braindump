@@ -5,6 +5,7 @@ struct EntryRow: View {
 	let displayTimestamp: String
 	let isProcessed: Bool
 	let isEditing: Bool
+	var isSelected: Bool = false
 	@Binding var editContent: String
 	var autoCorrect: Bool = false
 	var fontColor: Color = .primary
@@ -39,6 +40,11 @@ struct EntryRow: View {
 			}
 		}
 		.padding(.vertical, 4)
+		.padding(.horizontal, 4)
+		.background(
+			RoundedRectangle(cornerRadius: 4)
+				.fill(isSelected && !isEditing ? Color.accentColor.opacity(0.1) : Color.clear)
+		)
 		.opacity(isProcessed ? 0.6 : 1.0)
 	}
 }

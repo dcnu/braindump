@@ -45,16 +45,19 @@ struct DayView: View {
 			// Existing entries
 			if appState.dailyFile != nil {
 				ForEach(appState.displayEntries()) { entry in
+					let isSelected = appState.selectedEntryID == entry.id
 					EntryRow(
 						entry: entry,
 						displayTimestamp: appState.displayTimestamp(entry.timestamp),
 						isProcessed: appState.isReadOnly,
 						isEditing: appState.editingEntryID == entry.id,
+						isSelected: isSelected,
 						editContent: $appState.editingContent,
 						autoCorrect: appState.settings.autoCorrect,
 						fontColor: fontColor,
 						timestampColor: timestampColor,
 						onTap: {
+							appState.selectedEntryID = entry.id
 							appState.startEditing(id: entry.id)
 						},
 						onSubmit: {
