@@ -3,6 +3,14 @@ import SwiftUI
 struct DayView: View {
 	@Bindable var appState: AppState
 
+	private var fontColor: Color {
+		Color(hex: appState.settings.fontColorHex)
+	}
+
+	private var timestampColor: Color {
+		fontColor.opacity(0.5)
+	}
+
 	var body: some View {
 		VStack(alignment: .leading, spacing: 12) {
 			dayHeader
@@ -12,7 +20,7 @@ struct DayView: View {
 				HStack(alignment: .top, spacing: 12) {
 					Text("--:--:--")
 						.font(.system(.caption, design: .monospaced))
-						.foregroundStyle(.tertiary)
+						.foregroundStyle(timestampColor.opacity(0.5))
 						.frame(width: 70, alignment: .leading)
 
 					AutoClosingTextEditor(
@@ -44,6 +52,8 @@ struct DayView: View {
 						isEditing: appState.editingEntryID == entry.id,
 						editContent: $appState.editingContent,
 						autoCorrect: appState.settings.autoCorrect,
+						fontColor: fontColor,
+						timestampColor: timestampColor,
 						onTap: {
 							appState.startEditing(id: entry.id)
 						},
@@ -62,13 +72,13 @@ struct DayView: View {
 				if appState.isToday {
 					Text("Press CMD+N to add an entry")
 						.font(.system(.body, design: .monospaced))
-						.foregroundStyle(.tertiary)
+						.foregroundStyle(timestampColor)
 						.frame(maxWidth: .infinity, alignment: .center)
 						.padding(.top, 20)
 				} else {
 					Text("No entries on this day")
 						.font(.system(.body, design: .monospaced))
-						.foregroundStyle(.tertiary)
+						.foregroundStyle(timestampColor)
 						.frame(maxWidth: .infinity, alignment: .center)
 						.padding(.top, 20)
 				}
@@ -79,7 +89,7 @@ struct DayView: View {
 	private var dayHeader: some View {
 		HStack(spacing: 6) {
 			Image(systemName: "clock")
-				.foregroundStyle(.secondary)
+				.foregroundStyle(timestampColor)
 				.font(.system(.caption))
 
 			Text(DateFormatting.displayDate(appState.currentDate))
@@ -94,7 +104,7 @@ struct DayView: View {
 
 			if appState.isReadOnly && !appState.isToday {
 				Image(systemName: "lock.fill")
-					.foregroundStyle(.secondary)
+					.foregroundStyle(timestampColor)
 					.font(.system(.caption))
 			}
 

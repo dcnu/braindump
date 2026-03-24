@@ -17,17 +17,36 @@ struct SettingsView: View {
 	]
 
 	var body: some View {
-		Form {
-			storageSection
-			appearanceSection
-			colorsSection
-			fontSection
-			entriesSection
-			textCleanupSection
-			hotkeySection
-			startupSection
+		VStack(spacing: 0) {
+			Form {
+				storageSection
+				appearanceSection
+				colorsSection
+				fontSection
+				entriesSection
+				textCleanupSection
+				hotkeySection
+				startupSection
+			}
+			.formStyle(.grouped)
+
+			Divider()
+
+			HStack {
+				Button("Reset to Defaults") {
+					appState.settings.resetToDefaults()
+				}
+				.foregroundStyle(.red)
+
+				Spacer()
+
+				Button("Done") {
+					NSApp.keyWindow?.close()
+				}
+				.keyboardShortcut(.return, modifiers: [])
+			}
+			.padding()
 		}
-		.formStyle(.grouped)
 	}
 
 	// MARK: - Storage

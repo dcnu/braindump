@@ -7,6 +7,8 @@ struct EntryRow: View {
 	let isEditing: Bool
 	@Binding var editContent: String
 	var autoCorrect: Bool = false
+	var fontColor: Color = .primary
+	var timestampColor: Color = .secondary
 	let onTap: () -> Void
 	let onSubmit: () -> Void
 	let onDelete: () -> Void
@@ -15,7 +17,7 @@ struct EntryRow: View {
 		HStack(alignment: .top, spacing: 12) {
 			Text(displayTimestamp)
 				.font(.system(.caption, design: .monospaced))
-				.foregroundStyle(.secondary)
+				.foregroundStyle(timestampColor)
 				.frame(width: 70, alignment: .leading)
 
 			if isEditing {
@@ -28,7 +30,7 @@ struct EntryRow: View {
 			} else {
 				Text(entry.content.isEmpty ? " " : entry.content)
 					.font(.system(.body, design: .monospaced))
-					.foregroundStyle(isProcessed ? .secondary : .primary)
+					.foregroundStyle(isProcessed ? fontColor.opacity(0.4) : fontColor)
 					.frame(maxWidth: .infinity, alignment: .leading)
 					.contentShape(Rectangle())
 					.onTapGesture {

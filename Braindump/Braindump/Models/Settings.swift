@@ -158,6 +158,19 @@ final class AppSettings {
 		return base.appendingPathComponent(Constants.braindumpDirectory)
 	}
 
+	func resetToDefaults() {
+		let keysToReset = [
+			"sortKey", "timeFormat", "entryOrder", "timestampMode",
+			"appearanceMode", "dayStartHour", "launchAtLogin",
+			"fontName", "fontSize", "enterSubmits", "autoCapitalize", "autoCorrect",
+			"fontColorHex", "headerColorHex", "backgroundColorHex",
+			"hotkeyKeyCode", "hotkeyModifiers",
+		]
+		for key in keysToReset {
+			UserDefaults.standard.removeObject(forKey: key)
+		}
+	}
+
 	private func defaultVaultPath() -> String {
 		let home = NSHomeDirectory()
 		return "\(home)/Documents/Obsidian"

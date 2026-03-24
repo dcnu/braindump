@@ -94,6 +94,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		window.contentView = NSHostingView(rootView: settingsView)
 		window.center()
 		window.isReleasedWhenClosed = false
+		window.delegate = self
 
 		NSApp.activate(ignoringOtherApps: true)
 		window.orderFrontRegardless()
@@ -139,7 +140,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 		}
 	}
 
+	private func updatePanelBackground() {
+		let hex = appState.settings.backgroundColorHex
+		panel.backgroundColor = NSColor(
+			red: CGFloat(Int(hex.dropFirst().prefix(2), radix: 16) ?? 255) / 255,
+			green: CGFloat(Int(hex.dropFirst(3).prefix(2), radix: 16) ?? 255) / 255,
+			blue: CGFloat(Int(hex.dropFirst(5).prefix(2), radix: 16) ?? 255) / 255,
+			alpha: 1
+		)
+	}
+
 	private func showPanel() {
+		updatePanelBackground()
 		guard let screen = NSScreen.main else { return }
 		let screenFrame = screen.visibleFrame
 		let panelSize = panel.frame.size
@@ -228,5 +240,11 @@ extension AppDelegate: NSWindowDelegate {
 			return false
 		}
 		return true
+	}
+
+	func windowDidResignKey(_ notification: Notification) {
+		guard let window = notification.object as? NSWindow,
+			  window == settingsWindow else { return }
+		window.orderOut(nil)
 	}
 }
