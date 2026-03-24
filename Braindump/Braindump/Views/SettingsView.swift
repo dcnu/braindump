@@ -130,18 +130,19 @@ struct SettingsView: View {
 		VStack(alignment: .leading, spacing: 8) {
 			ColorPicker("Text color", selection: Binding(
 				get: { Color(hex: appState.settings.fontColorHex) },
-				set: { appState.settings.fontColorHex = $0.toHex() }
-			))
-
-			ColorPicker("Header color", selection: Binding(
-				get: { Color(hex: appState.settings.headerColorHex) },
-				set: { appState.settings.headerColorHex = $0.toHex() }
-			))
+				set: {
+					appState.settings.fontColorHex = $0.toHex()
+					NotificationCenter.default.post(name: .settingsChanged, object: nil)
+				}
+			), supportsOpacity: false)
 
 			ColorPicker("Background color", selection: Binding(
 				get: { Color(hex: appState.settings.backgroundColorHex) },
-				set: { appState.settings.backgroundColorHex = $0.toHex() }
-			))
+				set: {
+					appState.settings.backgroundColorHex = $0.toHex()
+					NotificationCenter.default.post(name: .settingsChanged, object: nil)
+				}
+			), supportsOpacity: false)
 
 			Text("Timestamp color is derived from text color at 50% opacity.")
 				.font(.caption)

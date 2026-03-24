@@ -98,7 +98,7 @@ struct DayView: View {
 
 			Text(DateFormatting.displayDate(appState.currentDate))
 				.font(.system(.headline, design: .monospaced))
-				.foregroundStyle(Color(hex: appState.settings.headerColorHex))
+				.foregroundStyle(fontColor)
 
 			if appState.isToday {
 				Text("Today")
