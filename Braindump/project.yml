@@ -48,3 +48,14 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Braindump.app/Contents/MacOS/Braindump"
         BUNDLE_LOADER: "$(TEST_HOST)"
+  BraindumpUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: BraindumpUITests
+    dependencies:
+      - target: Braindump
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dcnu.braindump.uitests
+        GENERATE_INFOPLIST_FILE: YES
