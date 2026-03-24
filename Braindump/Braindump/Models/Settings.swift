@@ -26,8 +26,7 @@ struct KeyCombo: Equatable {
 	var key: UInt16
 	var modifiers: UInt
 
-	// Ctrl+Shift+Space — avoids Ctrl+Space (input source) and CMD+Space (Spotlight)
-	static let defaultHotkey = KeyCombo(key: 49, modifiers: 393475) // control + shift
+	static let defaultHotkey = KeyCombo(key: 49, modifiers: 393475)
 
 	var displayString: String {
 		var parts: [String] = []
@@ -57,100 +56,106 @@ struct KeyCombo: Equatable {
 
 @Observable
 final class AppSettings {
+	let defaults: UserDefaults
+
+	init(defaults: UserDefaults = .standard) {
+		self.defaults = defaults
+	}
+
 	var sortKey: SortKey {
-		get { SortKey(rawValue: UserDefaults.standard.string(forKey: "sortKey") ?? "created") ?? .created }
-		set { UserDefaults.standard.set(newValue.rawValue, forKey: "sortKey") }
+		get { SortKey(rawValue: defaults.string(forKey: "sortKey") ?? "created") ?? .created }
+		set { defaults.set(newValue.rawValue, forKey: "sortKey") }
 	}
 
 	var vaultPath: String {
-		get { UserDefaults.standard.string(forKey: "vaultPath") ?? defaultVaultPath() }
-		set { UserDefaults.standard.set(newValue, forKey: "vaultPath") }
+		get { defaults.string(forKey: "vaultPath") ?? defaultVaultPath() }
+		set { defaults.set(newValue, forKey: "vaultPath") }
 	}
 
 	var timeFormat: TimeFormat {
-		get { TimeFormat(rawValue: UserDefaults.standard.string(forKey: "timeFormat") ?? "24h") ?? .h24 }
-		set { UserDefaults.standard.set(newValue.rawValue, forKey: "timeFormat") }
+		get { TimeFormat(rawValue: defaults.string(forKey: "timeFormat") ?? "24h") ?? .h24 }
+		set { defaults.set(newValue.rawValue, forKey: "timeFormat") }
 	}
 
 	var entryOrder: EntryOrder {
-		get { EntryOrder(rawValue: UserDefaults.standard.string(forKey: "entryOrder") ?? "reverseChronological") ?? .reverseChronological }
-		set { UserDefaults.standard.set(newValue.rawValue, forKey: "entryOrder") }
+		get { EntryOrder(rawValue: defaults.string(forKey: "entryOrder") ?? "reverseChronological") ?? .reverseChronological }
+		set { defaults.set(newValue.rawValue, forKey: "entryOrder") }
 	}
 
 	var globalHotkey: KeyCombo {
 		get {
-			let key = UserDefaults.standard.object(forKey: "hotkeyKeyCode") as? Int
-			let mods = UserDefaults.standard.object(forKey: "hotkeyModifiers") as? Int
+			let key = defaults.object(forKey: "hotkeyKeyCode") as? Int
+			let mods = defaults.object(forKey: "hotkeyModifiers") as? Int
 			if let key, let mods {
 				return KeyCombo(key: UInt16(key), modifiers: UInt(mods))
 			}
 			return KeyCombo.defaultHotkey
 		}
 		set {
-			UserDefaults.standard.set(Int(newValue.key), forKey: "hotkeyKeyCode")
-			UserDefaults.standard.set(Int(newValue.modifiers), forKey: "hotkeyModifiers")
+			defaults.set(Int(newValue.key), forKey: "hotkeyKeyCode")
+			defaults.set(Int(newValue.modifiers), forKey: "hotkeyModifiers")
 		}
 	}
 
 	var enterSubmits: Bool {
-		get { UserDefaults.standard.object(forKey: "enterSubmits") != nil ? UserDefaults.standard.bool(forKey: "enterSubmits") : false }
-		set { UserDefaults.standard.set(newValue, forKey: "enterSubmits") }
+		get { defaults.object(forKey: "enterSubmits") != nil ? defaults.bool(forKey: "enterSubmits") : false }
+		set { defaults.set(newValue, forKey: "enterSubmits") }
 	}
 
 	var autoCapitalize: Bool {
-		get { UserDefaults.standard.object(forKey: "autoCapitalize") != nil ? UserDefaults.standard.bool(forKey: "autoCapitalize") : true }
-		set { UserDefaults.standard.set(newValue, forKey: "autoCapitalize") }
+		get { defaults.object(forKey: "autoCapitalize") != nil ? defaults.bool(forKey: "autoCapitalize") : true }
+		set { defaults.set(newValue, forKey: "autoCapitalize") }
 	}
 
 	var autoCorrect: Bool {
-		get { UserDefaults.standard.object(forKey: "autoCorrect") != nil ? UserDefaults.standard.bool(forKey: "autoCorrect") : false }
-		set { UserDefaults.standard.set(newValue, forKey: "autoCorrect") }
+		get { defaults.object(forKey: "autoCorrect") != nil ? defaults.bool(forKey: "autoCorrect") : false }
+		set { defaults.set(newValue, forKey: "autoCorrect") }
 	}
 
 	var fontColorHex: String {
-		get { UserDefaults.standard.string(forKey: "fontColorHex") ?? "#000000" }
-		set { UserDefaults.standard.set(newValue, forKey: "fontColorHex") }
+		get { defaults.string(forKey: "fontColorHex") ?? "#000000" }
+		set { defaults.set(newValue, forKey: "fontColorHex") }
 	}
 
 	var headerColorHex: String {
-		get { UserDefaults.standard.string(forKey: "headerColorHex") ?? "#1a1a1a" }
-		set { UserDefaults.standard.set(newValue, forKey: "headerColorHex") }
+		get { defaults.string(forKey: "headerColorHex") ?? "#1a1a1a" }
+		set { defaults.set(newValue, forKey: "headerColorHex") }
 	}
 
 	var backgroundColorHex: String {
-		get { UserDefaults.standard.string(forKey: "backgroundColorHex") ?? "#ffffff" }
-		set { UserDefaults.standard.set(newValue, forKey: "backgroundColorHex") }
+		get { defaults.string(forKey: "backgroundColorHex") ?? "#ffffff" }
+		set { defaults.set(newValue, forKey: "backgroundColorHex") }
 	}
 
 	var appearanceMode: AppearanceMode {
-		get { AppearanceMode(rawValue: UserDefaults.standard.string(forKey: "appearanceMode") ?? "system") ?? .system }
-		set { UserDefaults.standard.set(newValue.rawValue, forKey: "appearanceMode") }
+		get { AppearanceMode(rawValue: defaults.string(forKey: "appearanceMode") ?? "system") ?? .system }
+		set { defaults.set(newValue.rawValue, forKey: "appearanceMode") }
 	}
 
 	var dayStartHour: Int {
 		get {
-			let value = UserDefaults.standard.integer(forKey: "dayStartHour")
-			return UserDefaults.standard.object(forKey: "dayStartHour") != nil ? value : Constants.defaultDayStartHour
+			let value = defaults.integer(forKey: "dayStartHour")
+			return defaults.object(forKey: "dayStartHour") != nil ? value : Constants.defaultDayStartHour
 		}
-		set { UserDefaults.standard.set(newValue, forKey: "dayStartHour") }
+		set { defaults.set(newValue, forKey: "dayStartHour") }
 	}
 
 	var launchAtLogin: Bool {
-		get { UserDefaults.standard.bool(forKey: "launchAtLogin") }
-		set { UserDefaults.standard.set(newValue, forKey: "launchAtLogin") }
+		get { defaults.bool(forKey: "launchAtLogin") }
+		set { defaults.set(newValue, forKey: "launchAtLogin") }
 	}
 
 	var fontName: String {
-		get { UserDefaults.standard.string(forKey: "fontName") ?? "SF Mono" }
-		set { UserDefaults.standard.set(newValue, forKey: "fontName") }
+		get { defaults.string(forKey: "fontName") ?? "SF Mono" }
+		set { defaults.set(newValue, forKey: "fontName") }
 	}
 
 	var fontSize: Double {
 		get {
-			let value = UserDefaults.standard.double(forKey: "fontSize")
+			let value = defaults.double(forKey: "fontSize")
 			return value > 0 ? value : 13
 		}
-		set { UserDefaults.standard.set(newValue, forKey: "fontSize") }
+		set { defaults.set(newValue, forKey: "fontSize") }
 	}
 
 	var braindumpURL: URL {
@@ -160,14 +165,14 @@ final class AppSettings {
 
 	func resetToDefaults() {
 		let keysToReset = [
-			"sortKey", "timeFormat", "entryOrder", "timestampMode",
+			"sortKey", "timeFormat", "entryOrder",
 			"appearanceMode", "dayStartHour", "launchAtLogin",
 			"fontName", "fontSize", "enterSubmits", "autoCapitalize", "autoCorrect",
 			"fontColorHex", "headerColorHex", "backgroundColorHex",
 			"hotkeyKeyCode", "hotkeyModifiers",
 		]
 		for key in keysToReset {
-			UserDefaults.standard.removeObject(forKey: key)
+			defaults.removeObject(forKey: key)
 		}
 	}
 

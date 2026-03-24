@@ -6,13 +6,16 @@ final class AppStateTests: XCTestCase {
 	var settings: AppSettings!
 	var appState: AppState!
 
+	var testDefaults: UserDefaults!
+
 	override func setUp() {
 		super.setUp()
 		tempDir = FileManager.default.temporaryDirectory
 			.appendingPathComponent("braindump-appstate-test-\(UUID().uuidString)")
 		try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
 
-		settings = AppSettings()
+		testDefaults = UserDefaults(suiteName: "com.dcnu.braindump.tests.\(UUID().uuidString)")!
+		settings = AppSettings(defaults: testDefaults)
 		settings.vaultPath = tempDir.path
 		appState = AppState(settings: settings)
 	}

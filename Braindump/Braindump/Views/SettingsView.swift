@@ -6,29 +6,25 @@ struct SettingsView: View {
 	@Bindable var appState: AppState
 
 	private let monoFonts = [
-		"SF Mono",
-		"Menlo",
-		"Monaco",
-		"Courier New",
-		"Andale Mono",
-		"Source Code Pro",
-		"Fira Code",
-		"JetBrains Mono",
+		"SF Mono", "Menlo", "Monaco", "Courier New",
+		"Andale Mono", "Source Code Pro", "Fira Code", "JetBrains Mono",
 	]
 
 	var body: some View {
 		VStack(spacing: 0) {
-			Form {
-				storageSection
-				appearanceSection
-				colorsSection
-				fontSection
-				entriesSection
-				textCleanupSection
-				hotkeySection
-				startupSection
+			ScrollView {
+				VStack(alignment: .leading, spacing: 16) {
+					settingsSection("Storage") { storageContent }
+					settingsSection("Appearance") { appearanceContent }
+					settingsSection("Colors") { colorsContent }
+					settingsSection("Font") { fontContent }
+					settingsSection("Entries") { entriesContent }
+					settingsSection("Text Cleanup") { textCleanupContent }
+					settingsSection("Global Hotkey") { hotkeyContent }
+					settingsSection("Startup") { startupContent }
+				}
+				.padding(20)
 			}
-			.formStyle(.grouped)
 
 			Divider()
 
@@ -45,39 +41,55 @@ struct SettingsView: View {
 				}
 				.keyboardShortcut(.return, modifiers: [])
 			}
-			.padding()
+			.padding(16)
+		}
+	}
+
+	// MARK: - Section wrapper
+
+	private func settingsSection<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+		VStack(alignment: .leading, spacing: 8) {
+			Text(title)
+				.font(.system(.headline))
+				.padding(.leading, 4)
+
+			VStack(alignment: .leading, spacing: 12) {
+				content()
+			}
+			.padding(12)
+			.frame(maxWidth: .infinity, alignment: .leading)
+			.background(
+				RoundedRectangle(cornerRadius: 8)
+					.fill(Color(.controlBackgroundColor))
+			)
 		}
 	}
 
 	// MARK: - Storage
 
-	private var storageSection: some View {
-		Section("Storage") {
-			VStack(alignment: .leading, spacing: 8) {
-				HStack {
-					Text("Notes directory")
-					Spacer()
-					Button("Choose...") {
-						chooseVaultPath()
-					}
-				}
-
-				Text(appState.settings.braindumpURL.path)
-					.font(.system(.caption, design: .monospaced))
-					.foregroundStyle(.secondary)
-					.textSelection(.enabled)
-
-				Text("Point to an iCloud Drive folder for automatic sync, or a git-tracked directory for version control.")
-					.font(.caption2)
-					.foregroundStyle(.tertiary)
+	private var storageContent: some View {
+		VStack(alignment: .leading, spacing: 8) {
+			HStack {
+				Text("Notes directory")
+				Spacer()
+				Button("Choose...") { chooseVaultPath() }
 			}
+
+			Text(appState.settings.braindumpURL.path)
+				.font(.system(.caption, design: .monospaced))
+				.foregroundStyle(.secondary)
+				.textSelection(.enabled)
+
+			Text("Point to an iCloud Drive folder for automatic sync, or a git-tracked directory for version control.")
+				.font(.caption2)
+				.foregroundStyle(.tertiary)
 		}
 	}
 
 	// MARK: - Appearance
 
-	private var appearanceSection: some View {
-		Section("Appearance") {
+	private var appearanceContent: some View {
+		VStack(alignment: .leading, spacing: 8) {
 			Picker("Theme", selection: Binding(
 				get: { appState.settings.appearanceMode },
 				set: { newValue in
@@ -102,10 +114,18 @@ struct SettingsView: View {
 		}
 	}
 
+	private var detectedAppearance: String {
+		let appearance = NSApp.effectiveAppearance
+		if appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
+			return "Dark"
+		}
+		return "Light"
+	}
+
 	// MARK: - Colors
 
-	private var colorsSection: some View {
-		Section("Colors") {
+	private var colorsContent: some View {
+		VStack(alignment: .leading, spacing: 8) {
 			ColorPicker("Text color", selection: Binding(
 				get: { Color(hex: appState.settings.fontColorHex) },
 				set: { appState.settings.fontColorHex = $0.toHex() }
@@ -127,38 +147,10 @@ struct SettingsView: View {
 		}
 	}
 
-	// MARK: - Text Cleanup
-
-	private var textCleanupSection: some View {
-		Section("Text Cleanup") {
-			Toggle("Auto-capitalize sentences", isOn: Binding(
-				get: { appState.settings.autoCapitalize },
-				set: { appState.settings.autoCapitalize = $0 }
-			))
-
-			Toggle("Spelling auto-correct", isOn: Binding(
-				get: { appState.settings.autoCorrect },
-				set: { appState.settings.autoCorrect = $0 }
-			))
-
-			Text("Uses macOS system spelling correction.")
-				.font(.caption)
-				.foregroundStyle(.secondary)
-		}
-	}
-
-	private var detectedAppearance: String {
-		let appearance = NSApp.effectiveAppearance
-		if appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
-			return "Dark"
-		}
-		return "Light"
-	}
-
 	// MARK: - Font
 
-	private var fontSection: some View {
-		Section("Font") {
+	private var fontContent: some View {
+		VStack(alignment: .leading, spacing: 8) {
 			Picker("Font family", selection: Binding(
 				get: { appState.settings.fontName },
 				set: { appState.settings.fontName = $0 }
@@ -194,15 +186,14 @@ struct SettingsView: View {
 
 	private var availableFonts: [String] {
 		monoFonts.filter { name in
-			NSFont(name: name, size: 13) != nil ||
-			name == "SF Mono" // SF Mono requires special access
+			NSFont(name: name, size: 13) != nil || name == "SF Mono"
 		}
 	}
 
 	// MARK: - Entries
 
-	private var entriesSection: some View {
-		Section("Entries") {
+	private var entriesContent: some View {
+		VStack(alignment: .leading, spacing: 8) {
 			Toggle("Enter submits entry", isOn: Binding(
 				get: { appState.settings.enterSubmits },
 				set: { appState.settings.enterSubmits = $0 }
@@ -231,12 +222,32 @@ struct SettingsView: View {
 		}
 	}
 
+	// MARK: - Text Cleanup
+
+	private var textCleanupContent: some View {
+		VStack(alignment: .leading, spacing: 8) {
+			Toggle("Auto-capitalize sentences", isOn: Binding(
+				get: { appState.settings.autoCapitalize },
+				set: { appState.settings.autoCapitalize = $0 }
+			))
+
+			Toggle("Spelling auto-correct", isOn: Binding(
+				get: { appState.settings.autoCorrect },
+				set: { appState.settings.autoCorrect = $0 }
+			))
+
+			Text("Uses macOS system spelling correction.")
+				.font(.caption)
+				.foregroundStyle(.secondary)
+		}
+	}
+
 	// MARK: - Hotkey
 
 	@State private var isRecordingHotkey = false
 
-	private var hotkeySection: some View {
-		Section("Global Hotkey") {
+	private var hotkeyContent: some View {
+		VStack(alignment: .leading, spacing: 8) {
 			HStack {
 				Text("Toggle panel")
 				Spacer()
@@ -278,16 +289,14 @@ struct SettingsView: View {
 
 	// MARK: - Startup
 
-	private var startupSection: some View {
-		Section("Startup") {
-			Toggle("Launch at login", isOn: Binding(
-				get: { appState.settings.launchAtLogin },
-				set: { newValue in
-					appState.settings.launchAtLogin = newValue
-					updateLoginItem(enabled: newValue)
-				}
-			))
-		}
+	private var startupContent: some View {
+		Toggle("Launch at login", isOn: Binding(
+			get: { appState.settings.launchAtLogin },
+			set: { newValue in
+				appState.settings.launchAtLogin = newValue
+				updateLoginItem(enabled: newValue)
+			}
+		))
 	}
 
 	// MARK: - Actions
@@ -313,9 +322,7 @@ struct SettingsView: View {
 			} else {
 				try SMAppService.mainApp.unregister()
 			}
-		} catch {
-			// Login item registration can fail silently
-		}
+		} catch {}
 	}
 
 	private func applyAppearance(_ mode: AppearanceMode) {
