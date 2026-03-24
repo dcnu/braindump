@@ -9,13 +9,12 @@ struct AutoClosingTextEditor: NSViewRepresentable {
 	var shouldFocus: Bool = false
 	var fontColorHex: String = "#000000"
 
-	func makeNSView(context: Context) -> NSScrollView {
-		let scrollView = NSScrollView()
+	func makeNSView(context: Context) -> IntrinsicScrollView {
+		let scrollView = IntrinsicScrollView()
 		scrollView.hasVerticalScroller = false
 		scrollView.hasHorizontalScroller = false
 		scrollView.drawsBackground = false
 		scrollView.borderType = .noBorder
-		scrollView.autoresizingMask = [.width, .height]
 
 		let textView = BraindumpTextView()
 		textView.isEditable = isEditable
@@ -23,6 +22,8 @@ struct AutoClosingTextEditor: NSViewRepresentable {
 		textView.string = text
 		textView.isAutomaticSpellingCorrectionEnabled = autoCorrect
 		textView.autoresizingMask = [.width]
+		textView.isVerticallyResizable = true
+		textView.isHorizontallyResizable = false
 
 		textView.minSize = NSSize(width: 0, height: 0)
 		textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
@@ -32,6 +33,7 @@ struct AutoClosingTextEditor: NSViewRepresentable {
 				context.coordinator.isUpdating = true
 				self.text = newText
 				context.coordinator.isUpdating = false
+				scrollView.invalidateIntrinsicContentSize()
 			}
 		}
 
@@ -46,7 +48,7 @@ struct AutoClosingTextEditor: NSViewRepresentable {
 		return scrollView
 	}
 
-	func updateNSView(_ nsView: NSScrollView, context: Context) {
+	func updateNSView(_ nsView: IntrinsicScrollView, context: Context) {
 		guard let textView = context.coordinator.textView else { return }
 		guard !context.coordinator.isUpdating else { return }
 
@@ -62,6 +64,7 @@ struct AutoClosingTextEditor: NSViewRepresentable {
 
 		textView.isEditable = isEditable
 		textView.isAutomaticSpellingCorrectionEnabled = autoCorrect
+
 		let hex = fontColorHex
 		textView.textColor = NSColor(
 			red: CGFloat(Int(hex.dropFirst().prefix(2), radix: 16) ?? 0) / 255,
@@ -75,7 +78,8 @@ struct AutoClosingTextEditor: NSViewRepresentable {
 			textView.textContainer?.containerSize = NSSize(width: scrollWidth, height: CGFloat.greatestFiniteMagnitude)
 		}
 
-		// One-shot focus: make first responder once, then stop
+		nsView.invalidateIntrinsicContentSize()
+
 		if shouldFocus && !context.coordinator.didFocus {
 			context.coordinator.didFocus = true
 			DispatchQueue.main.async {
@@ -90,8 +94,27 @@ struct AutoClosingTextEditor: NSViewRepresentable {
 
 	final class Coordinator {
 		var textView: BraindumpTextView?
-		var scrollView: NSScrollView?
+		var scrollView: IntrinsicScrollView?
 		var isUpdating = false
 		var didFocus = false
+	}
+}
+
+/// NSScrollView subclass that reports its document view's height as intrinsic content size.
+/// This tells SwiftUI how much vertical space the editor needs.
+final class IntrinsicScrollView: NSScrollView {
+	override var intrinsicContentSize: NSSize {
+		guard let docView = documentView else {
+			return NSSize(width: NSView.noIntrinsicMetric, height: 24)
+		}
+		// Use the layout manager's used rect for accurate height
+		if let textView = docView as? NSTextView,
+		   let layoutManager = textView.layoutManager,
+		   let textContainer = textView.textContainer {
+			layoutManager.ensureLayout(for: textContainer)
+			let usedRect = layoutManager.usedRect(for: textContainer)
+			return NSSize(width: NSView.noIntrinsicMetric, height: max(24, usedRect.height + 8))
+		}
+		return NSSize(width: NSView.noIntrinsicMetric, height: max(24, docView.frame.height))
 	}
 }
