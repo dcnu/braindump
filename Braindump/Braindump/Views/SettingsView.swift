@@ -5,6 +5,12 @@ import AppKit
 struct SettingsView: View {
 	@Bindable var appState: AppState
 
+	// Local state for toggles (synced to settings via .onAppear + .onChange)
+	@State private var enterSubmits: Bool = false
+	@State private var autoCapitalize: Bool = true
+	@State private var autoCorrect: Bool = false
+	@State private var launchAtLogin: Bool = false
+
 	private let monoFonts = [
 		"SF Mono", "Menlo", "Monaco", "Courier New",
 		"Andale Mono", "Source Code Pro", "Fira Code", "JetBrains Mono",
@@ -31,6 +37,7 @@ struct SettingsView: View {
 			HStack {
 				Button("Reset to Defaults") {
 					appState.settings.resetToDefaults()
+					syncFromSettings()
 					NotificationCenter.default.post(name: .settingsChanged, object: nil)
 				}
 				.foregroundStyle(.red)
@@ -45,6 +52,14 @@ struct SettingsView: View {
 			}
 			.padding(16)
 		}
+		.onAppear { syncFromSettings() }
+	}
+
+	private func syncFromSettings() {
+		enterSubmits = appState.settings.enterSubmits
+		autoCapitalize = appState.settings.autoCapitalize
+		autoCorrect = appState.settings.autoCorrect
+		launchAtLogin = appState.settings.launchAtLogin
 	}
 
 	// MARK: - Section wrapper
@@ -97,6 +112,7 @@ struct SettingsView: View {
 				set: { newValue in
 					appState.settings.appearanceMode = newValue
 					applyAppearance(newValue)
+					NotificationCenter.default.post(name: .settingsChanged, object: nil)
 				}
 			)) {
 				Text("System").tag(AppearanceMode.system)
@@ -117,32 +133,30 @@ struct SettingsView: View {
 	}
 
 	private var detectedAppearance: String {
-		let appearance = NSApp.effectiveAppearance
-		if appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
-			return "Dark"
-		}
-		return "Light"
+		NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? "Dark" : "Light"
 	}
 
 	// MARK: - Colors
 
 	private var colorsContent: some View {
 		VStack(alignment: .leading, spacing: 8) {
-			ColorPicker("Text color", selection: Binding(
-				get: { Color(hex: appState.settings.fontColorHex) },
-				set: {
-					appState.settings.fontColorHex = $0.toHex()
-					NotificationCenter.default.post(name: .settingsChanged, object: nil)
-				}
-			), supportsOpacity: false)
+			HStack(spacing: 20) {
+				ColorPicker("Text", selection: Binding(
+					get: { Color(hex: appState.settings.fontColorHex) },
+					set: {
+						appState.settings.fontColorHex = $0.toHex()
+						NotificationCenter.default.post(name: .settingsChanged, object: nil)
+					}
+				), supportsOpacity: false)
 
-			ColorPicker("Background color", selection: Binding(
-				get: { Color(hex: appState.settings.backgroundColorHex) },
-				set: {
-					appState.settings.backgroundColorHex = $0.toHex()
-					NotificationCenter.default.post(name: .settingsChanged, object: nil)
-				}
-			), supportsOpacity: false)
+				ColorPicker("Background", selection: Binding(
+					get: { Color(hex: appState.settings.backgroundColorHex) },
+					set: {
+						appState.settings.backgroundColorHex = $0.toHex()
+						NotificationCenter.default.post(name: .settingsChanged, object: nil)
+					}
+				), supportsOpacity: false)
+			}
 
 			Text("Timestamp color is derived from text color at 50% opacity.")
 				.font(.caption)
@@ -188,19 +202,17 @@ struct SettingsView: View {
 	}
 
 	private var availableFonts: [String] {
-		monoFonts.filter { name in
-			NSFont(name: name, size: 13) != nil || name == "SF Mono"
-		}
+		monoFonts.filter { NSFont(name: $0, size: 13) != nil || $0 == "SF Mono" }
 	}
 
 	// MARK: - Entries
 
 	private var entriesContent: some View {
 		VStack(alignment: .leading, spacing: 8) {
-			Toggle("Enter submits entry", isOn: Binding(
-				get: { appState.settings.enterSubmits },
-				set: { appState.settings.enterSubmits = $0 }
-			))
+			Toggle("Enter submits entry", isOn: $enterSubmits)
+				.onChange(of: enterSubmits) { _, newValue in
+					appState.settings.enterSubmits = newValue
+				}
 
 			Text("When enabled, pressing Enter creates a new timestamped entry. Use Shift+Enter for newlines.")
 				.font(.caption)
@@ -229,15 +241,15 @@ struct SettingsView: View {
 
 	private var textCleanupContent: some View {
 		VStack(alignment: .leading, spacing: 8) {
-			Toggle("Auto-capitalize sentences", isOn: Binding(
-				get: { appState.settings.autoCapitalize },
-				set: { appState.settings.autoCapitalize = $0 }
-			))
+			Toggle("Auto-capitalize sentences", isOn: $autoCapitalize)
+				.onChange(of: autoCapitalize) { _, newValue in
+					appState.settings.autoCapitalize = newValue
+				}
 
-			Toggle("Spelling auto-correct", isOn: Binding(
-				get: { appState.settings.autoCorrect },
-				set: { appState.settings.autoCorrect = $0 }
-			))
+			Toggle("Spelling auto-correct", isOn: $autoCorrect)
+				.onChange(of: autoCorrect) { _, newValue in
+					appState.settings.autoCorrect = newValue
+				}
 
 			Text("Uses macOS system spelling correction.")
 				.font(.caption)
@@ -293,13 +305,13 @@ struct SettingsView: View {
 	// MARK: - Startup
 
 	private var startupContent: some View {
-		Toggle("Launch at login", isOn: Binding(
-			get: { appState.settings.launchAtLogin },
-			set: { newValue in
-				appState.settings.launchAtLogin = newValue
-				updateLoginItem(enabled: newValue)
-			}
-		))
+		VStack(alignment: .leading, spacing: 4) {
+			Toggle("Launch at login", isOn: $launchAtLogin)
+				.onChange(of: launchAtLogin) { _, newValue in
+					appState.settings.launchAtLogin = newValue
+					updateLoginItem(enabled: newValue)
+				}
+		}
 	}
 
 	// MARK: - Actions
