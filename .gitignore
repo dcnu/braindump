@@ -33,3 +33,6 @@ Packages/
 # Archive
 archive/
 *.profraw
+
+# Project
+TODO/
